@@ -31,6 +31,7 @@ let voucherStatus = JSON.parse(localStorage.getItem('aura_vouchers_all') || '{}'
 let videoStatus = JSON.parse(localStorage.getItem('aura_videos_all') || '{}');
 let videoLinks = JSON.parse(localStorage.getItem('aura_video_links') || '{}');
 let trashStatus = JSON.parse(localStorage.getItem('aura_trash_ids') || '{}');
+let customEdits = JSON.parse(localStorage.getItem('aura_custom_edits') || '{}');
 let customBloggers = JSON.parse(localStorage.getItem('aura_custom_bloggers') || '[]');
 
 let editingVideoId = null;
@@ -82,8 +83,13 @@ function getAllBloggers() {
   const result = [];
 
   for (let i = 0; i < raw.length; i++) {
-    const b = raw[i];
+    let b = raw[i];
     if (!b) continue;
+
+    // Apply any custom edits to this card
+    if (b.id && customEdits[b.id]) {
+      b = { ...b, ...customEdits[b.id] };
+    }
 
     // Normalized handle check to guarantee ZERO card duplication
     const handleClean = (b.handle || '').toLowerCase().trim();
@@ -98,6 +104,11 @@ function getAllBloggers() {
       const cleanH = handleClean ? handleClean.replace(/[^a-z0-9_]/g, '') : `card_${i}`;
       bId = `${prefix}_${cleanH}_${Date.now()}`;
       b.id = bId;
+    }
+
+    // If edit exists for newly resolved ID
+    if (customEdits[bId]) {
+      b = { ...b, ...customEdits[bId] };
     }
 
     seenIds.add(bId);
@@ -144,7 +155,8 @@ async function saveStateToServer() {
         videos: videoStatus,
         links: videoLinks,
         trash: trashStatus,
-        custom: customBloggers
+        custom: customBloggers,
+        edits: customEdits
       })
     });
   } catch (e) {
@@ -227,6 +239,14 @@ async function loadStateFromServer() {
       if (JSON.stringify(customBloggers) !== JSON.stringify(data.custom)) {
         customBloggers = [...data.custom];
         localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
+        hasDiff = true;
+      }
+    }
+
+    if (data.edits && typeof data.edits === 'object') {
+      if (JSON.stringify(customEdits) !== JSON.stringify(data.edits)) {
+        customEdits = { ...data.edits };
+        localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
         hasDiff = true;
       }
     }
@@ -614,9 +634,14 @@ function renderApp() {
             <span class="list-item-num">#${idx + 1}</span>
             <span class="card-city-badge ${cityClass}">${hlCity || b.cityName || 'Блогер'}</span>
             <div class="list-item-main">
-              <a href="${igUrl}" target="_blank" class="blogger-handle-link">
-                ${hlHandle} <span style="font-size: 10px; opacity: 0.7;">↗</span>
-              </a>
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                <a href="${igUrl}" target="_blank" class="blogger-handle-link">
+                  ${hlHandle} <span style="font-size: 10px; opacity: 0.7;">↗</span>
+                </a>
+                <button class="btn-edit-badge" onclick="openEditModal('${bId}', event)" title="Редактировать карточку">
+                  ✏️ Изменить
+                </button>
+              </div>
               <div class="list-item-sub">
                 ${b.followers ? `<span class="col-followers-tag">👥 ${highlightText(b.followers, searchQuery)}</span> • ` : ''}
                 <span class="col-bio-text" title="${escapeHtml(b.note || '')}">${hlNote}</span>
@@ -675,7 +700,7 @@ function renderApp() {
               <span>🎬 Видео</span>
             </div>
 
-            <!-- Trash / Restore -->
+            <!-- Edit & Trash / Restore -->
             ${isTrash ? `
               <div style="display: inline-flex; gap: 4px; align-items: center;">
                 <button class="btn-header" onclick="restoreBlogger('${bId}', event)" style="font-size: 11px; padding: 4px 8px;" title="Восстановить карточку">
@@ -686,7 +711,10 @@ function renderApp() {
                 </button>
               </div>
             ` : `
-              <button class="btn-delete-card" onclick="deleteBlogger('${bId}', event)" title="Переместить в корзину">🗑️</button>
+              <div style="display: inline-flex; gap: 4px; align-items: center;">
+                <button class="btn-delete-card btn-edit-card" onclick="openEditModal('${bId}', event)" title="Редактировать карточку полностью">✏️</button>
+                <button class="btn-delete-card" onclick="deleteBlogger('${bId}', event)" title="Переместить в корзину">🗑️</button>
+              </div>
             `}
           </div>
         </div>
@@ -1112,3 +1140,123 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStateFromServer();
   setInterval(loadStateFromServer, 3000);
 });
+
+/* ==========================================================
+   Full Card Editing Modal Logic
+   ========================================================== */
+let currentEditingBloggerId = null;
+
+function openEditModal(id, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  const b = findBlogger(id);
+  if (!b) {
+    showToast('Ошибка: карточка не найдена');
+    return;
+  }
+
+  currentEditingBloggerId = id;
+
+  document.getElementById('editModalId').value = id;
+  document.getElementById('editModalHandle').value = b.handle || '';
+  document.getElementById('editModalCity').value = b.city || 'qarshi';
+  document.getElementById('editModalTg').value = (b.tg || '').replace('@', '').replace('https://t.me/', '').trim();
+  document.getElementById('editModalPhone').value = b.phone || '';
+  document.getElementById('editModalPhone2').value = b.phone2 || '';
+  document.getElementById('editModalFollowers').value = b.followers || '';
+  document.getElementById('editModalNote').value = b.note || '';
+  document.getElementById('editModalVideoLink').value = videoLinks[id] || '';
+
+  // Checkboxes
+  document.getElementById('editModalSentCheck').checked = !!sentStatus[id];
+  document.getElementById('editModalVoucherCheck').checked = !!voucherStatus[id];
+  document.getElementById('editModalVideoCheck').checked = (!!videoStatus[id] || !!videoLinks[id]);
+
+  const overlay = document.getElementById('editModalOverlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    setTimeout(() => {
+      const handleInput = document.getElementById('editModalHandle');
+      if (handleInput) handleInput.focus();
+    }, 100);
+  }
+}
+
+function closeEditModal() {
+  const overlay = document.getElementById('editModalOverlay');
+  if (overlay) overlay.classList.remove('open');
+  currentEditingBloggerId = null;
+}
+
+function closeEditModalOnBackdrop(e) {
+  if (e.target.id === 'editModalOverlay') closeEditModal();
+}
+
+function saveEditedBlogger() {
+  const id = currentEditingBloggerId;
+  if (!id) return;
+
+  let handleVal = document.getElementById('editModalHandle').value.trim();
+  if (!handleVal) {
+    showToast('Введите Instagram никнейм!');
+    return;
+  }
+  if (!handleVal.startsWith('@')) handleVal = '@' + handleVal;
+
+  const city = document.getElementById('editModalCity').value;
+  const tg = document.getElementById('editModalTg').value.trim().replace('@', '');
+  const phone = document.getElementById('editModalPhone').value.trim();
+  const phone2 = document.getElementById('editModalPhone2').value.trim();
+  const followers = document.getElementById('editModalFollowers').value.trim();
+  const note = document.getElementById('editModalNote').value.trim();
+  const videoLink = document.getElementById('editModalVideoLink').value.trim();
+
+  const cityNames = { qarshi: 'Карши', bukhara: 'Бухара', samarkand: 'Самарканд', no_contacts: 'Без контактов' };
+
+  // Save changes to customEdits dictionary
+  customEdits[id] = {
+    handle: handleVal,
+    city: city,
+    cityName: cityNames[city] || 'Карши',
+    tg: tg || null,
+    phone: phone || null,
+    phone2: phone2 || null,
+    followers: followers || null,
+    note: note || null
+  };
+  localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
+
+  // If in customBloggers array, update there too
+  const customIdx = customBloggers.findIndex(item => item.id === id);
+  if (customIdx !== -1) {
+    customBloggers[customIdx] = {
+      ...customBloggers[customIdx],
+      ...customEdits[id]
+    };
+    localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
+  }
+
+  // Update Statuses
+  const isSent = document.getElementById('editModalSentCheck').checked;
+  const isVoucher = document.getElementById('editModalVoucherCheck').checked;
+  const isVideo = document.getElementById('editModalVideoCheck').checked;
+
+  if (isSent) sentStatus[id] = true; else delete sentStatus[id];
+  if (isVoucher) voucherStatus[id] = true; else delete voucherStatus[id];
+  if (isVideo || videoLink) videoStatus[id] = true; else delete videoStatus[id];
+
+  // Update Video Link
+  if (videoLink) {
+    videoLinks[id] = cleanVideoUrl(videoLink);
+    videoStatus[id] = true;
+  } else {
+    delete videoLinks[id];
+  }
+
+  saveAllStatus();
+  closeEditModal();
+  renderApp();
+  showToast(`✓ Карточка ${handleVal} полностью обновлена!`);
+}

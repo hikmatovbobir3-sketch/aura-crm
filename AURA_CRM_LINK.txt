@@ -1,2 +1,2 @@
-AURA CRM Public Link (Cloudflare Tunnel):
-https://verde-chest-delhi-steven.trycloudflare.com
+AURA CRM (Постоянный сайт на GitHub Pages):
+https://hikmatovbobir3-sketch.github.io/aura-crm/

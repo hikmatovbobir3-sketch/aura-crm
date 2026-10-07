@@ -201,7 +201,93 @@
   <span id="toastMsg">Уведомление</span>
 </div>
 
-<script src="js/data.js?v=103"></script>
-<script src="js/app.js?v=103"></script>
+<script src="js/data.js?v=104"></script>
+<script src="js/app.js?v=104"></script>
+
+  <!-- Modal: Edit Blogger Completely -->
+  <div class="modal-overlay" id="editModalOverlay" onclick="closeEditModalOnBackdrop(event)">
+    <div class="modal-box" style="max-width: 540px;">
+      <button class="modal-close-btn" onclick="closeEditModal()">✕</button>
+      <div class="modal-title">✏️ Редактирование карточки блогера</div>
+      <div class="modal-subtitle">Измените любые данные карточки: никнейм, город, контакты, подписчиков, ссылку на видео или статусы.</div>
+
+      <input type="hidden" id="editModalId">
+
+      <div class="modal-grid-2">
+        <div class="modal-form-group">
+          <label>Instagram никнейм</label>
+          <input type="text" class="modal-input" id="editModalHandle" placeholder="@username">
+        </div>
+
+        <div class="modal-form-group">
+          <label>Город / База</label>
+          <select class="modal-input" id="editModalCity">
+            <option value="qarshi">📍 Карши</option>
+            <option value="bukhara">🕌 Бухара</option>
+            <option value="samarkand">🏛️ Самарканд</option>
+            <option value="no_contacts">🚫 Без контактов</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-grid-2">
+        <div class="modal-form-group">
+          <label>Telegram юзернейм</label>
+          <input type="text" class="modal-input" id="editModalTg" placeholder="username без @">
+        </div>
+
+        <div class="modal-form-group">
+          <label>Количество подписчиков</label>
+          <input type="text" class="modal-input" id="editModalFollowers" placeholder="например, 25k или 120 000">
+        </div>
+      </div>
+
+      <div class="modal-grid-2">
+        <div class="modal-form-group">
+          <label>Основной телефон</label>
+          <input type="text" class="modal-input" id="editModalPhone" placeholder="+998 90 123 45 67">
+        </div>
+
+        <div class="modal-form-group">
+          <label>Дополнительный телефон</label>
+          <input type="text" class="modal-input" id="editModalPhone2" placeholder="+998 91 ...">
+        </div>
+      </div>
+
+      <div class="modal-form-group">
+        <label>Имя / Заметка / Тематика</label>
+        <input type="text" class="modal-input" id="editModalNote" placeholder="Имя, специальность, заметка...">
+      </div>
+
+      <div class="modal-form-group">
+        <label>🎬 Ссылка на видео Instagram (Reels / публикация)</label>
+        <input type="url" class="modal-input" id="editModalVideoLink" placeholder="https://www.instagram.com/reel/...">
+      </div>
+
+      <div class="modal-form-group" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 10px;">
+        <label style="margin-bottom: 8px; display: block; font-weight: 600;">Отметки статуса:</label>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px;">
+            <input type="checkbox" id="editModalSentCheck" style="accent-color: #3b82f6; width: 16px; height: 16px;">
+            <span>✉️ Отправлено</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px;">
+            <input type="checkbox" id="editModalVoucherCheck" style="accent-color: #8b5cf6; width: 16px; height: 16px;">
+            <span>🎟️ Ваучер</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px;">
+            <input type="checkbox" id="editModalVideoCheck" style="accent-color: #10b981; width: 16px; height: 16px;">
+            <span>🎬 Видео</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button class="btn-header" onclick="closeEditModal()">Отмена</button>
+        <button class="btn-header btn-header-primary" onclick="saveEditedBlogger()" style="padding: 9px 20px;">💾 Сохранить изменения</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
