@@ -137,6 +137,7 @@ function saveAllStatus() {
   localStorage.setItem('aura_videos_all', JSON.stringify(videoStatus));
   localStorage.setItem('aura_video_links', JSON.stringify(videoLinks));
   localStorage.setItem('aura_trash_ids', JSON.stringify(trashStatus));
+  localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
   saveStateToServer();
 }
 
@@ -244,8 +245,14 @@ async function loadStateFromServer() {
     }
 
     if (data.edits && typeof data.edits === 'object') {
-      if (JSON.stringify(customEdits) !== JSON.stringify(data.edits)) {
-        customEdits = { ...data.edits };
+      let editsChanged = false;
+      for (const [eId, eData] of Object.entries(data.edits)) {
+        if (!customEdits[eId] || JSON.stringify(customEdits[eId]) !== JSON.stringify(eData)) {
+          customEdits[eId] = { ...(customEdits[eId] || {}), ...eData };
+          editsChanged = true;
+        }
+      }
+      if (editsChanged) {
         localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
         hasDiff = true;
       }
@@ -1213,13 +1220,19 @@ function saveEditedBlogger() {
   const note = document.getElementById('editModalNote').value.trim();
   const videoLink = document.getElementById('editModalVideoLink').value.trim();
 
-  const cityNames = { qarshi: 'Карши', bukhara: 'Бухара', samarkand: 'Самарканд', no_contacts: 'Без контактов' };
+  const cityNames = { 
+    qarshi: 'Карши', 
+    bukhara: 'Бухара', 
+    samarkand: 'Самарканд', 
+    no_contacts: 'Без контактов' 
+  };
+  const cityName = cityNames[city] || 'Карши';
 
-  // Save changes to customEdits dictionary
+  // 1. Save changes to customEdits dictionary
   customEdits[id] = {
     handle: handleVal,
     city: city,
-    cityName: cityNames[city] || 'Карши',
+    cityName: cityName,
     tg: tg || null,
     phone: phone || null,
     phone2: phone2 || null,
@@ -1228,17 +1241,16 @@ function saveEditedBlogger() {
   };
   localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
 
-  // If in customBloggers array, update there too
-  const customIdx = customBloggers.findIndex(item => item.id === id);
-  if (customIdx !== -1) {
-    customBloggers[customIdx] = {
-      ...customBloggers[customIdx],
-      ...customEdits[id]
-    };
-    localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
-  }
+  // 2. Directly update any existing object in database memory
+  const allArrays = [QARSHI_BLOGGERS, BUKHARA_BLOGGERS, SAMARKAND_BLOGGERS, NO_CONTACTS, customBloggers];
+  allArrays.forEach(arr => {
+    const item = arr.find(b => b.id === id);
+    if (item) {
+      Object.assign(item, customEdits[id]);
+    }
+  });
 
-  // Update Statuses
+  // 3. Update Statuses
   const isSent = document.getElementById('editModalSentCheck').checked;
   const isVoucher = document.getElementById('editModalVoucherCheck').checked;
   const isVideo = document.getElementById('editModalVideoCheck').checked;
@@ -1247,7 +1259,7 @@ function saveEditedBlogger() {
   if (isVoucher) voucherStatus[id] = true; else delete voucherStatus[id];
   if (isVideo || videoLink) videoStatus[id] = true; else delete videoStatus[id];
 
-  // Update Video Link
+  // 4. Update Video Link
   if (videoLink) {
     videoLinks[id] = cleanVideoUrl(videoLink);
     videoStatus[id] = true;
@@ -1257,6 +1269,13 @@ function saveEditedBlogger() {
 
   saveAllStatus();
   closeEditModal();
-  renderApp();
-  showToast(`✓ Карточка ${handleVal} полностью обновлена!`);
+
+  // If user changed the region and is currently on a specific city tab, switch to the new city tab!
+  if (currentRegion !== 'all' && currentRegion !== 'trash' && currentRegion !== city) {
+    switchRegion(city);
+    showToast(`✓ Карточка ${handleVal} перенесена в регион «${cityName}»!`);
+  } else {
+    renderApp();
+    showToast(`✓ Карточка ${handleVal} обновлена! (Регион: ${cityName})`);
+  }
 }
