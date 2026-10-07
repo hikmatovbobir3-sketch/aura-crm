@@ -1,0 +1,5 @@
+cloudflared.exe
+PUBLIC_LINK.txt
+.netlify
+__pycache__/
+*.pyc
