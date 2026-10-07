@@ -191,57 +191,78 @@ async function loadStateFromServer() {
 
     let hasDiff = false;
 
+    // Merge sent
     if (data.sent && typeof data.sent === 'object') {
       delete data.sent['undefined'];
-      if (JSON.stringify(sentStatus) !== JSON.stringify(data.sent)) {
-        sentStatus = { ...data.sent };
-        localStorage.setItem('aura_sent_all', JSON.stringify(sentStatus));
-        hasDiff = true;
+      for (const [k, v] of Object.entries(data.sent)) {
+        if (!sentStatus[k] && v) {
+          sentStatus[k] = true;
+          hasDiff = true;
+        }
       }
+      localStorage.setItem('aura_sent_all', JSON.stringify(sentStatus));
     }
 
+    // Merge vouchers
     if (data.vouchers && typeof data.vouchers === 'object') {
       delete data.vouchers['undefined'];
-      if (JSON.stringify(voucherStatus) !== JSON.stringify(data.vouchers)) {
-        voucherStatus = { ...data.vouchers };
-        localStorage.setItem('aura_vouchers_all', JSON.stringify(voucherStatus));
-        hasDiff = true;
+      for (const [k, v] of Object.entries(data.vouchers)) {
+        if (!voucherStatus[k] && v) {
+          voucherStatus[k] = true;
+          hasDiff = true;
+        }
       }
+      localStorage.setItem('aura_vouchers_all', JSON.stringify(voucherStatus));
     }
 
+    // Merge videos
     if (data.videos && typeof data.videos === 'object') {
       delete data.videos['undefined'];
-      if (JSON.stringify(videoStatus) !== JSON.stringify(data.videos)) {
-        videoStatus = { ...data.videos };
-        localStorage.setItem('aura_videos_all', JSON.stringify(videoStatus));
-        hasDiff = true;
+      for (const [k, v] of Object.entries(data.videos)) {
+        if (!videoStatus[k] && v) {
+          videoStatus[k] = true;
+          hasDiff = true;
+        }
       }
+      localStorage.setItem('aura_videos_all', JSON.stringify(videoStatus));
     }
 
+    // Merge links
     if (data.links && typeof data.links === 'object') {
       delete data.links['undefined'];
-      if (JSON.stringify(videoLinks) !== JSON.stringify(data.links)) {
-        videoLinks = { ...data.links };
-        localStorage.setItem('aura_video_links', JSON.stringify(videoLinks));
-        hasDiff = true;
+      for (const [k, v] of Object.entries(data.links)) {
+        if (!videoLinks[k] && v) {
+          videoLinks[k] = v;
+          hasDiff = true;
+        }
       }
+      localStorage.setItem('aura_video_links', JSON.stringify(videoLinks));
     }
 
+    // Merge trash
     if (data.trash && typeof data.trash === 'object') {
       delete data.trash['undefined'];
-      if (JSON.stringify(trashStatus) !== JSON.stringify(data.trash)) {
-        trashStatus = { ...data.trash };
-        localStorage.setItem('aura_trash_ids', JSON.stringify(trashStatus));
-        hasDiff = true;
+      for (const [k, v] of Object.entries(data.trash)) {
+        if (v && !trashStatus[k]) {
+          trashStatus[k] = true;
+          hasDiff = true;
+        }
       }
+      localStorage.setItem('aura_trash_ids', JSON.stringify(trashStatus));
     }
 
-    if (Array.isArray(data.custom)) {
-      if (JSON.stringify(customBloggers) !== JSON.stringify(data.custom)) {
-        customBloggers = [...data.custom];
-        localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
-        hasDiff = true;
-      }
+    // MERGE custom bloggers (NEVER delete local custom bloggers!)
+    if (Array.isArray(data.custom) && data.custom.length > 0) {
+      data.custom.forEach(remoteB => {
+        if (remoteB && remoteB.handle) {
+          const exists = customBloggers.some(b => b.id === remoteB.id || (b.handle && b.handle.toLowerCase() === remoteB.handle.toLowerCase()));
+          if (!exists) {
+            customBloggers.push(remoteB);
+            hasDiff = true;
+          }
+        }
+      });
+      localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
     }
 
     if (data.edits && typeof data.edits === 'object') {
@@ -1084,21 +1105,32 @@ function checkBloggerExists() {
 
 function submitNewBlogger() {
   let val = document.getElementById('modalSearchHandle').value.trim();
+  if (!val) {
+    showToast('Введите Instagram никнейм!');
+    return;
+  }
   if (!val.startsWith('@')) val = '@' + val;
+
   const city = document.getElementById('modalCitySelect').value;
   const tg = document.getElementById('modalTgInput').value.trim().replace('@', '');
   const phone = document.getElementById('modalPhoneInput').value.trim();
   const followers = document.getElementById('modalFollowersInput').value.trim();
   const note = document.getElementById('modalNoteInput').value.trim();
 
-  const cityNames = { qarshi: 'Карши', bukhara: 'Бухара', samarkand: 'Самарканд', no_contacts: 'Без контактов' };
+  const cityNames = { 
+    qarshi: 'Карши', 
+    bukhara: 'Бухара', 
+    samarkand: 'Самарканд', 
+    no_contacts: 'Без контактов' 
+  };
+  const cityName = cityNames[city] || 'Карши';
 
   const cleanH = val.replace(/[^a-zA-Z0-9_]/g, '');
   const newB = {
     id: `custom_${cleanH}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
     handle: val,
     city: city,
-    cityName: cityNames[city] || 'Карши',
+    cityName: cityName,
     tg: tg || null,
     phone: phone || null,
     followers: followers || null,
@@ -1108,9 +1140,17 @@ function submitNewBlogger() {
   customBloggers.push(newB);
   localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
 
+  saveAllStatus();
   closeAddModal();
-  renderApp();
-  showToast(`Блогер ${val} успешно добавлен в базу!`);
+
+  // Switch to the target city tab so the user immediately sees the new card
+  if (currentRegion !== 'all' && currentRegion !== city) {
+    switchRegion(city);
+    showToast(`✓ Блогер ${val} добавлен в «${cityName}»!`);
+  } else {
+    renderApp();
+    showToast(`✓ Блогер ${val} успешно добавлен в базу!`);
+  }
 }
 
 function showToast(msg) {
@@ -1145,7 +1185,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (msgEl) msgEl.innerText = MESSAGE;
   renderApp();
   loadStateFromServer();
-  setInterval(loadStateFromServer, 3000);
+
+  // Only poll if running with a real local server, avoid destructive polling on static GitHub Pages
+  const isLocalBackend = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  if (isLocalBackend) {
+    setInterval(loadStateFromServer, 3000);
+  }
 });
 
 /* ==========================================================
@@ -1278,4 +1323,27 @@ function saveEditedBlogger() {
     renderApp();
     showToast(`✓ Карточка ${handleVal} обновлена! (Регион: ${cityName})`);
   }
+}
+
+function exportDatabaseState() {
+  const stateData = {
+    sent: sentStatus,
+    vouchers: voucherStatus,
+    videos: videoStatus,
+    links: videoLinks,
+    trash: trashStatus,
+    custom: customBloggers,
+    edits: customEdits
+  };
+  const jsonStr = JSON.stringify(stateData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'aura_state.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📥 Файл aura_state.json успешно скачан!');
 }

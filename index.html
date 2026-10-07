@@ -25,6 +25,7 @@
       <div class="header-actions">
         <button class="btn-header" id="themeToggleBtn" onclick="toggleTheme()">☀️ Светлая тема</button>
         <button class="btn-header btn-header-primary" onclick="openAddModal()">➕ Добавить блогера</button>
+          <button class="btn-header" onclick="exportDatabaseState()" title="Скачать резервную копию базы">💾 Скачать базу</button>
       </div>
     </div>
 
@@ -201,8 +202,8 @@
   <span id="toastMsg">Уведомление</span>
 </div>
 
-<script src="js/data.js?v=105"></script>
-<script src="js/app.js?v=105"></script>
+<script src="js/data.js?v=106"></script>
+<script src="js/app.js?v=106"></script>
 
   <!-- Modal: Edit Blogger Completely -->
   <div class="modal-overlay" id="editModalOverlay" onclick="closeEditModalOnBackdrop(event)">
