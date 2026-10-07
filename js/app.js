@@ -156,8 +156,23 @@ async function saveStateToServer() {
 async function loadStateFromServer() {
   if (isSavingState) return;
   try {
-    const res = await fetch(window.location.protocol === 'file:' ? 'http://localhost:3000/api/state' : '/api/state');
-    if (!res.ok) return;
+    let res = null;
+
+    // 1. Try local server endpoint if running on localhost or via file protocol
+    if (window.location.protocol === 'file:') {
+      try { res = await fetch('http://localhost:3000/api/state'); } catch (e) {}
+    } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      try { res = await fetch('/api/state'); } catch (e) {}
+    }
+
+    // 2. Fallback for GitHub Pages or static host: load aura_state.json from repository
+    if (!res || !res.ok) {
+      try {
+        res = await fetch('aura_state.json?t=' + Date.now());
+      } catch (e) {}
+    }
+
+    if (!res || !res.ok) return;
     const data = await res.json();
     if (!data || typeof data !== 'object') return;
 
