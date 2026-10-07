@@ -23,7 +23,7 @@ git commit -m "%commit_msg%"
 
 echo.
 echo [3/3] Otpravka na GitHub (git push)...
-git push
+git push -u origin main
 
 echo.
 if %ERRORLEVEL% equ 0 (
