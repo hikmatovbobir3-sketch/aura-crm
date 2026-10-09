@@ -31,6 +31,7 @@ let voucherStatus = JSON.parse(localStorage.getItem('aura_vouchers_all') || '{}'
 let videoStatus = JSON.parse(localStorage.getItem('aura_videos_all') || '{}');
 let videoLinks = JSON.parse(localStorage.getItem('aura_video_links') || '{}');
 let videoViews = JSON.parse(localStorage.getItem('aura_video_views') || '{}');
+let videoViewsRev = parseInt(localStorage.getItem('aura_video_views_rev') || '0', 10) || 0;
 let trashStatus = JSON.parse(localStorage.getItem('aura_trash_ids') || '{}');
 let customEdits = JSON.parse(localStorage.getItem('aura_custom_edits') || '{}');
 let customBloggers = JSON.parse(localStorage.getItem('aura_custom_bloggers') || '[]');
@@ -159,6 +160,7 @@ async function saveStateToServer() {
         videos: videoStatus,
         links: videoLinks,
         views: videoViews,
+        viewsRev: videoViewsRev,
         trash: trashStatus,
         custom: customBloggers,
         edits: customEdits
@@ -231,11 +233,22 @@ async function loadStateFromServer() {
       localStorage.setItem('aura_videos_all', JSON.stringify(videoStatus));
     }
 
+    // Newer video revision on server (e.g. refreshed real view counts / fixed links) overrides local values
+    const remoteRev = parseInt(data.viewsRev || 0, 10) || 0;
+    const serverWins = remoteRev > videoViewsRev;
+    if (serverWins) {
+      videoViewsRev = remoteRev;
+      localStorage.setItem('aura_video_views_rev', String(videoViewsRev));
+    }
+
     // Merge links
     if (data.links && typeof data.links === 'object') {
       delete data.links['undefined'];
       for (const [k, v] of Object.entries(data.links)) {
-        if (!videoLinks[k] && v) {
+        if (serverWins && v && videoLinks[k] !== v) {
+          videoLinks[k] = v;
+          hasDiff = true;
+        } else if (!videoLinks[k] && v) {
           videoLinks[k] = v;
           hasDiff = true;
         }
@@ -247,7 +260,10 @@ async function loadStateFromServer() {
     if (data.views && typeof data.views === 'object') {
       delete data.views['undefined'];
       for (const [k, v] of Object.entries(data.views)) {
-        if (!videoViews[k] && v) {
+        if (serverWins && videoViews[k] !== v) {
+          if (v) videoViews[k] = v; else delete videoViews[k];
+          hasDiff = true;
+        } else if (!videoViews[k] && v) {
           videoViews[k] = v;
           hasDiff = true;
         }
@@ -630,7 +646,6 @@ function renderApp() {
         displayUrl = displayUrl.substring(0, 31) + '...';
       }
       const safeLink = escapeHtml(rawVideoLink);
-      const displayViewsText = rawViews ? rawViews : '0';
 
       videoSlotHtml = `
         <div class="card-video-slot has-video-link" id="video_slot_${bId}">
@@ -640,9 +655,9 @@ function renderApp() {
           </div>
           <div class="video-display-box">
             <!-- CLICKABLE VIDEO VIEWS LINK PILL -->
-            <a href="${safeLink}" target="_blank" class="video-views-link-pill" title="Открыть видео в Instagram (${displayViewsText} просмотров): ${safeLink}">
+            <a href="${safeLink}" target="_blank" class="video-views-link-pill" title="Открыть видео в Instagram${rawViews ? ` (${rawViews} просмотров)` : ''}: ${safeLink}">
               <span class="video-views-icon">👁️</span>
-              <span class="video-views-count"><b>${highlightText(displayViewsText, searchQuery)}</b> просмотров</span>
+              <span class="video-views-count">${rawViews ? `<b>${highlightText(rawViews, searchQuery)}</b> просмотров` : 'Просмотры не указаны'}</span>
               <span class="video-pill-arrow">↗</span>
             </a>
 
