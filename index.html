@@ -99,6 +99,7 @@
       <div class="sort-wrap">
         <select class="sort-select" id="sortSelect" onchange="onSortChange(this.value)">
           <option value="default">Сортировка: По умолчанию</option>
+          <option value="views_desc">👁️ Просмотры видео: по убыванию (макс → мин)</option>
           <option value="followers_desc">👥 Подписчики: по убыванию (макс → мин)</option>
           <option value="followers_asc">👥 Подписчики: по возрастанию</option>
           <option value="name_asc">🔤 По нику (A → Z)</option>
@@ -188,6 +189,17 @@
         <input type="text" class="modal-input" id="modalNoteInput" placeholder="Фитнес / Стилист / Обзоры...">
       </div>
 
+      <div class="modal-grid-2">
+        <div class="modal-form-group">
+          <label>🎬 Ссылка на видео (необяз.)</label>
+          <input type="url" class="modal-input" id="modalVideoLinkInput" placeholder="https://www.instagram.com/reel/...">
+        </div>
+        <div class="modal-form-group">
+          <label>👁️ Просмотры видео (необяз.)</label>
+          <input type="text" class="modal-input" id="modalVideoViewsInput" placeholder="напр., 18 400">
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button class="btn-header" onclick="closeAddModal()">Отмена</button>
         <button class="btn-header btn-header-primary" onclick="submitNewBlogger()">Сохранить блогера</button>
@@ -202,8 +214,8 @@
   <span id="toastMsg">Уведомление</span>
 </div>
 
-<script src="js/data.js?v=106"></script>
-<script src="js/app.js?v=106"></script>
+<script src="js/data.js?v=110"></script>
+<script src="js/app.js?v=110"></script>
 
   <!-- Modal: Edit Blogger Completely -->
   <div class="modal-overlay" id="editModalOverlay" onclick="closeEditModalOnBackdrop(event)">
@@ -260,9 +272,16 @@
         <input type="text" class="modal-input" id="editModalNote" placeholder="Имя, специальность, заметка...">
       </div>
 
-      <div class="modal-form-group">
-        <label>🎬 Ссылка на видео Instagram (Reels / публикация)</label>
-        <input type="url" class="modal-input" id="editModalVideoLink" placeholder="https://www.instagram.com/reel/...">
+      <div class="modal-grid-2">
+        <div class="modal-form-group">
+          <label>🎬 Ссылка на видео Instagram</label>
+          <input type="url" class="modal-input" id="editModalVideoLink" placeholder="https://www.instagram.com/reel/...">
+        </div>
+
+        <div class="modal-form-group">
+          <label>👁️ Количество просмотров видео</label>
+          <input type="text" class="modal-input" id="editModalVideoViews" placeholder="например, 18 400 или 25k">
+        </div>
       </div>
 
       <div class="modal-form-group" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 10px;">

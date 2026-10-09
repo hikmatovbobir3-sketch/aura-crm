@@ -25,6 +25,7 @@ if not os.path.exists(STATE_FILE):
         "vouchers": {},
         "videos": {},
         "links": {},
+        "views": {},
         "trash": {},
         "custom": []
     }

@@ -9,7 +9,7 @@ let MESSAGE = localStorage.getItem('aura_custom_message') || `Ассалому �
 Сизга AURA эркаклар кийим дўкони номидан ҳамкорлик таклифи билан ёзаётгандик.`;
 
 // Clean up any stale or corrupted 'undefined' keys from previous sessions
-['aura_sent_all', 'aura_vouchers_all', 'aura_videos_all', 'aura_video_links', 'aura_trash_ids'].forEach(storageKey => {
+['aura_sent_all', 'aura_vouchers_all', 'aura_videos_all', 'aura_video_links', 'aura_video_views', 'aura_trash_ids'].forEach(storageKey => {
   try {
     const raw = localStorage.getItem(storageKey);
     if (raw) {
@@ -30,6 +30,7 @@ let sentStatus = JSON.parse(localStorage.getItem('aura_sent_all') || '{}');
 let voucherStatus = JSON.parse(localStorage.getItem('aura_vouchers_all') || '{}');
 let videoStatus = JSON.parse(localStorage.getItem('aura_videos_all') || '{}');
 let videoLinks = JSON.parse(localStorage.getItem('aura_video_links') || '{}');
+let videoViews = JSON.parse(localStorage.getItem('aura_video_views') || '{}');
 let trashStatus = JSON.parse(localStorage.getItem('aura_trash_ids') || '{}');
 let customEdits = JSON.parse(localStorage.getItem('aura_custom_edits') || '{}');
 let customBloggers = JSON.parse(localStorage.getItem('aura_custom_bloggers') || '[]');
@@ -130,12 +131,14 @@ function saveAllStatus() {
   delete voucherStatus['undefined'];
   delete videoStatus['undefined'];
   delete videoLinks['undefined'];
+  delete videoViews['undefined'];
   delete trashStatus['undefined'];
 
   localStorage.setItem('aura_sent_all', JSON.stringify(sentStatus));
   localStorage.setItem('aura_vouchers_all', JSON.stringify(voucherStatus));
   localStorage.setItem('aura_videos_all', JSON.stringify(videoStatus));
   localStorage.setItem('aura_video_links', JSON.stringify(videoLinks));
+  localStorage.setItem('aura_video_views', JSON.stringify(videoViews));
   localStorage.setItem('aura_trash_ids', JSON.stringify(trashStatus));
   localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
   saveStateToServer();
@@ -155,6 +158,7 @@ async function saveStateToServer() {
         vouchers: voucherStatus,
         videos: videoStatus,
         links: videoLinks,
+        views: videoViews,
         trash: trashStatus,
         custom: customBloggers,
         edits: customEdits
@@ -239,6 +243,18 @@ async function loadStateFromServer() {
       localStorage.setItem('aura_video_links', JSON.stringify(videoLinks));
     }
 
+    // Merge views
+    if (data.views && typeof data.views === 'object') {
+      delete data.views['undefined'];
+      for (const [k, v] of Object.entries(data.views)) {
+        if (!videoViews[k] && v) {
+          videoViews[k] = v;
+          hasDiff = true;
+        }
+      }
+      localStorage.setItem('aura_video_views', JSON.stringify(videoViews));
+    }
+
     // Merge trash
     if (data.trash && typeof data.trash === 'object') {
       delete data.trash['undefined'];
@@ -285,17 +301,51 @@ async function loadStateFromServer() {
   } catch (e) {}
 }
 
-function parseFollowerNumber(followersStr) {
-  if (!followersStr) return 0;
-  let str = followersStr.toString().toLowerCase().trim().replace(/\s+/g, '');
-  if (str.endsWith('k') || str.endsWith('к')) {
-    return parseFloat(str) * 1000;
+function parseFollowerNumber(val) {
+  if (!val) return 0;
+  let str = val.toString().toLowerCase().trim().replace(/\s+/g, '').replace(',', '.');
+  if (str.includes('млн') || str.includes('m') || str.includes('м')) {
+    const num = parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
+    return num * 1000000;
   }
-  if (str.endsWith('m') || str.endsWith('м')) {
-    return parseFloat(str) * 1000000;
+  if (str.includes('тыс') || str.includes('k') || str.includes('к')) {
+    const num = parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
+    return num * 1000;
   }
   const clean = str.replace(/[^0-9.]/g, '');
   return parseFloat(clean) || 0;
+}
+
+function getBloggerFollowers(b) {
+  if (!b) return null;
+  // 1. Direct property b.followers
+  if (b.followers && b.followers.toString().trim()) {
+    let fStr = b.followers.toString().trim();
+    const m = fStr.match(/(?:^|[\s_a-zA-Z0-9.-]+?)(\d+(?:[.,]\d+)?\s*(?:тыс\.?|млн\.?|k|m)?|\d{1,3}(?:\s+\d{3})+)$/i);
+    if (m && m[1]) return m[1].trim();
+    return fStr;
+  }
+  // 2. Fallback: check b.note if it contains follower count
+  if (b.note && typeof b.note === 'string') {
+    const noteTrim = b.note.trim();
+    const m = noteTrim.match(/(?:^|[\s_a-zA-Z0-9.-]+?)(\d+(?:[.,]\d+)?\s*тыс\.?|\d{1,3}\s+\d{3}|\d{4,})$/i);
+    if (m && m[1]) {
+      if (!noteTrim.includes('номер') && !noteTrim.includes('Врач') && !noteTrim.includes('Телефон') && !noteTrim.includes('Обзор')) {
+        return m[1].trim();
+      }
+    }
+  }
+  return null;
+}
+
+function getBloggerDisplayNote(b, followers) {
+  if (!b || !b.note) return '—';
+  let noteStr = b.note.toString().trim();
+  if (followers && (noteStr === followers || noteStr.endsWith(followers))) {
+    const prefix = noteStr.replace(followers, '').replace(/^[0-9_.-]+/, '').trim();
+    return prefix || '—';
+  }
+  return noteStr;
 }
 
 function escapeRegExp(string) {
@@ -393,28 +443,33 @@ function getFilteredList() {
   } else if (currentFilter === 'has_phone') {
     list = list.filter(b => !!b.phone);
   } else if (currentFilter === 'top_followers') {
-    list = list.filter(b => parseFollowerNumber(b.followers) >= 50000);
+    list = list.filter(b => parseFollowerNumber(getBloggerFollowers(b)) >= 50000);
   }
 
   // 3. Search Query Filter
   if (searchQuery) {
     list = list.filter(b => {
+      const followersStr = getBloggerFollowers(b) || '';
+      const viewsStr = videoViews[b.id] || '';
       const matchHandle = (b.handle || '').toLowerCase().includes(searchQuery);
       const matchTg = (b.tg || '').toLowerCase().includes(searchQuery);
       const matchPhone = (b.phone || '').toLowerCase().includes(searchQuery) || (b.phone2 || '').toLowerCase().includes(searchQuery);
       const matchNote = (b.note || '').toLowerCase().includes(searchQuery);
       const matchCity = (b.cityName || '').toLowerCase().includes(searchQuery);
-      const matchFollowers = (b.followers || '').toString().toLowerCase().includes(searchQuery);
+      const matchFollowers = followersStr.toLowerCase().includes(searchQuery);
       const matchVideoLink = (videoLinks[b.id] || '').toLowerCase().includes(searchQuery);
-      return matchHandle || matchTg || matchPhone || matchNote || matchCity || matchFollowers || matchVideoLink;
+      const matchViews = viewsStr.toLowerCase().includes(searchQuery);
+      return matchHandle || matchTg || matchPhone || matchNote || matchCity || matchFollowers || matchVideoLink || matchViews;
     });
   }
 
   // 4. Sorting
   if (currentSort === 'followers_desc') {
-    list.sort((a, b) => parseFollowerNumber(b.followers) - parseFollowerNumber(a.followers));
+    list.sort((a, b) => parseFollowerNumber(getBloggerFollowers(b)) - parseFollowerNumber(getBloggerFollowers(a)));
   } else if (currentSort === 'followers_asc') {
-    list.sort((a, b) => parseFollowerNumber(a.followers) - parseFollowerNumber(b.followers));
+    list.sort((a, b) => parseFollowerNumber(getBloggerFollowers(a)) - parseFollowerNumber(getBloggerFollowers(b)));
+  } else if (currentSort === 'views_desc') {
+    list.sort((a, b) => parseFollowerNumber(videoViews[b.id]) - parseFollowerNumber(videoViews[a.id]));
   } else if (currentSort === 'name_asc') {
     list.sort((a, b) => (a.handle || '').localeCompare(b.handle || ''));
   } else if (currentSort === 'pending_first') {
@@ -543,7 +598,10 @@ function renderApp() {
     const isVideo = !!videoStatus[bId] || !!videoLinks[bId];
     const isTrash = !!trashStatus[bId];
     const rawVideoLink = videoLinks[bId] || '';
+    const rawViews = (videoViews[bId] || '').toString().trim();
     const isEditingThisVideo = (editingVideoId === bId);
+    const followersVal = getBloggerFollowers(b);
+    const displayNote = getBloggerDisplayNote(b, followersVal);
 
     const cleanUser = (b.tg || '').replace('@', '').replace('https://t.me/', '').trim();
     const cleanHandle = (b.handle || '').replace('@', '').trim();
@@ -552,7 +610,7 @@ function renderApp() {
 
     // Highlighted strings
     const hlHandle = highlightText(b.handle, searchQuery);
-    const hlNote = highlightText(b.note || '—', searchQuery);
+    const hlNote = highlightText(displayNote, searchQuery);
     const hlTg = highlightText(b.tg ? `@${cleanUser}` : '', searchQuery);
     const hlPhone = highlightText(b.phone || '', searchQuery);
     const hlCity = highlightText(b.cityName || '', searchQuery);
@@ -568,10 +626,11 @@ function renderApp() {
     let videoSlotHtml = '';
     if (rawVideoLink && !isEditingThisVideo) {
       let displayUrl = rawVideoLink.replace(/^https?:\/\/(www\.)?instagram\.com\//, 'ig.com/');
-      if (displayUrl.length > 38) {
-        displayUrl = displayUrl.substring(0, 35) + '...';
+      if (displayUrl.length > 34) {
+        displayUrl = displayUrl.substring(0, 31) + '...';
       }
       const safeLink = escapeHtml(rawVideoLink);
+      const displayViewsText = rawViews ? rawViews : '0';
 
       videoSlotHtml = `
         <div class="card-video-slot has-video-link" id="video_slot_${bId}">
@@ -580,12 +639,23 @@ function renderApp() {
             <span>Видео Instagram:</span>
           </div>
           <div class="video-display-box">
+            <!-- CLICKABLE VIDEO VIEWS LINK PILL -->
+            <a href="${safeLink}" target="_blank" class="video-views-link-pill" title="Открыть видео в Instagram (${displayViewsText} просмотров): ${safeLink}">
+              <span class="video-views-icon">👁️</span>
+              <span class="video-views-count"><b>${highlightText(displayViewsText, searchQuery)}</b> просмотров</span>
+              <span class="video-pill-arrow">↗</span>
+            </a>
+
+            <!-- URL Pill (also clickable) -->
             <a href="${safeLink}" target="_blank" class="video-url-pill" title="Открыть видео: ${safeLink}">
               <span class="video-pill-play">▶</span>
               <span class="video-pill-text">${highlightText(displayUrl, searchQuery)}</span>
-              <span class="video-pill-arrow">↗</span>
             </a>
+
             <div class="video-actions-group">
+              <button class="btn-video-action btn-edit-views" onclick="editVideoViews('${bId}', event)" title="Изменить или указать просмотры видео">
+                👁️ ${rawViews ? 'Изменить' : 'Указать'} просмотры
+              </button>
               <a href="${safeLink}" target="_blank" class="btn-video-action btn-watch-video" title="Смотреть видео в Instagram">
                 ▶ Открыть
               </a>
@@ -607,14 +677,21 @@ function renderApp() {
         <div class="card-video-slot" id="video_slot_${bId}" style="border-color: #f59e0b; background: rgba(245, 158, 11, 0.08);">
           <div class="video-slot-label" style="color: #fbbf24;">
             <span>✏️</span>
-            <span>Изменить ссылку IG:</span>
+            <span>Редактировать видео IG:</span>
           </div>
           <div class="video-input-box">
             <input type="url" 
                    class="video-url-input" 
                    id="video_input_${bId}" 
-                   placeholder="Вставьте ссылку на видео в Instagram (Reels / Пост)..." 
+                   placeholder="Ссылка на видео в Instagram (Reels / Пост)..." 
                    value="${escapeHtml(rawVideoLink)}"
+                   onkeydown="if(event.key==='Enter') saveVideoLinkFromInput('${bId}')">
+            <input type="text"
+                   class="video-views-input"
+                   id="video_views_input_${bId}"
+                   placeholder="Просмотры (напр. 18 400)..."
+                   value="${escapeHtml(rawViews)}"
+                   style="max-width: 170px;"
                    onkeydown="if(event.key==='Enter') saveVideoLinkFromInput('${bId}')">
             <button class="btn-video-sub btn-paste" onclick="pasteVideoLink('${bId}')" title="Вставить из буфера">
               📋 Вставить
@@ -642,6 +719,13 @@ function renderApp() {
                    placeholder="Вставьте ссылку на Reels / публикацию в Instagram..." 
                    value=""
                    onkeydown="if(event.key==='Enter') saveVideoLinkFromInput('${bId}')">
+            <input type="text"
+                   class="video-views-input"
+                   id="video_views_input_${bId}"
+                   placeholder="Просмотры (напр. 15 400)..."
+                   value=""
+                   style="max-width: 170px;"
+                   onkeydown="if(event.key==='Enter') saveVideoLinkFromInput('${bId}')">
             <button class="btn-video-sub btn-paste" onclick="pasteVideoLink('${bId}')" title="Вставить из буфера обмена">
               📋 Вставить
             </button>
@@ -662,16 +746,34 @@ function renderApp() {
             <span class="list-item-num">#${idx + 1}</span>
             <span class="card-city-badge ${cityClass}">${hlCity || b.cityName || 'Блогер'}</span>
             <div class="list-item-main">
-              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
                 <a href="${igUrl}" target="_blank" class="blogger-handle-link">
                   ${hlHandle} <span style="font-size: 10px; opacity: 0.7;">↗</span>
                 </a>
+
+                <!-- PROMINENT SUBSCRIBER BADGE -->
+                ${followersVal ? `
+                  <span class="card-followers-badge" title="Количество подписчиков">
+                    👥 ${highlightText(followersVal, searchQuery)}
+                  </span>
+                ` : `
+                  <span class="card-followers-badge empty" onclick="openEditModal('${bId}', event)" title="Нажмите, чтобы указать количество подписчиков">
+                    👥 + Подписчики
+                  </span>
+                `}
+
+                <!-- PROMINENT VIDEO VIEWS LINK ON MAIN ROW -->
+                ${rawVideoLink ? `
+                  <a href="${escapeHtml(rawVideoLink)}" target="_blank" class="card-video-pill-mini" title="Смотреть видео в Instagram${rawViews ? ' (' + rawViews + ' просмотров)' : ''}: ${escapeHtml(rawVideoLink)}">
+                    🎬 ${rawViews ? `${highlightText(rawViews, searchQuery)} просмотров` : 'Видео'} <span style="font-size: 9px; opacity: 0.8;">↗</span>
+                  </a>
+                ` : ''}
+
                 <button class="btn-edit-badge" onclick="openEditModal('${bId}', event)" title="Редактировать карточку">
                   ✏️ Изменить
                 </button>
               </div>
               <div class="list-item-sub">
-                ${b.followers ? `<span class="col-followers-tag">👥 ${highlightText(b.followers, searchQuery)}</span> • ` : ''}
                 <span class="col-bio-text" title="${escapeHtml(b.note || '')}">${hlNote}</span>
               </div>
             </div>
@@ -879,7 +981,7 @@ function cleanVideoUrl(rawUrl) {
   return url;
 }
 
-function saveVideoLink(id, rawUrl) {
+function saveVideoLink(id, rawUrl, rawViews) {
   if (!id || id === 'undefined') {
     showToast('Ошибка: не указан ID блогера');
     return;
@@ -892,6 +994,12 @@ function saveVideoLink(id, rawUrl) {
 
   videoLinks[id] = url;
   videoStatus[id] = true; // Auto-activate video status for this blogger only
+  if (rawViews !== undefined && rawViews !== null) {
+    const vTrim = rawViews.toString().trim();
+    if (vTrim) {
+      videoViews[id] = vTrim;
+    }
+  }
   editingVideoId = null;
 
   saveAllStatus();
@@ -902,9 +1010,33 @@ function saveVideoLink(id, rawUrl) {
 function saveVideoLinkFromInput(id) {
   if (!id || id === 'undefined') return;
   const input = document.getElementById(`video_input_${id}`);
+  const viewsInput = document.getElementById(`video_views_input_${id}`);
+  const viewsVal = viewsInput ? viewsInput.value.trim() : null;
   if (input) {
-    saveVideoLink(id, input.value);
+    saveVideoLink(id, input.value, viewsVal);
   }
+}
+
+function editVideoViews(id, event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  if (!id || id === 'undefined') return;
+  const currentVal = videoViews[id] || '';
+  const newVal = prompt('Введите количество просмотров для видео (например: 18 400 или 25k):', currentVal);
+  if (newVal === null) return; // User cancelled
+  
+  const valTrim = newVal.trim();
+  if (valTrim) {
+    videoViews[id] = valTrim;
+    showToast(`👁️ Просмотры видео обновлены: ${valTrim} ✓`);
+  } else {
+    delete videoViews[id];
+    showToast('Просмотры видео очищены');
+  }
+  saveAllStatus();
+  renderApp();
 }
 
 async function pasteVideoLink(id) {
@@ -912,7 +1044,9 @@ async function pasteVideoLink(id) {
   try {
     const text = await navigator.clipboard.readText();
     if (text && text.trim()) {
-      saveVideoLink(id, text.trim());
+      const viewsInput = document.getElementById(`video_views_input_${id}`);
+      const viewsVal = viewsInput ? viewsInput.value.trim() : null;
+      saveVideoLink(id, text.trim(), viewsVal);
       showToast('Ссылка вставлена из буфера и сохранена!');
       return;
     }
@@ -959,10 +1093,11 @@ function cancelEditVideoLink() {
 function removeVideoLink(id) {
   if (!id || id === 'undefined') return;
   delete videoLinks[id];
+  delete videoViews[id];
   editingVideoId = null;
   saveAllStatus();
   renderApp();
-  showToast('Ссылка на видео удалена с этой карточки');
+  showToast('Ссылка на видео и просмотры удалены с этой карточки');
 }
 
 function deleteBlogger(id, event) {
@@ -1021,6 +1156,7 @@ function permanentDeleteBlogger(id, event) {
   delete voucherStatus[id];
   delete videoStatus[id];
   delete videoLinks[id];
+  delete videoViews[id];
 
   saveAllStatus();
   renderApp();
@@ -1048,6 +1184,7 @@ function emptyAllTrash() {
     delete voucherStatus[id];
     delete videoStatus[id];
     delete videoLinks[id];
+    delete videoViews[id];
   });
 
   saveAllStatus();
@@ -1061,6 +1198,8 @@ function openAddModal() {
   document.getElementById('modalSearchHandle').value = '';
   document.getElementById('modalCheckResult').style.display = 'none';
   document.getElementById('modalAddForm').style.display = 'none';
+  if (document.getElementById('modalVideoLinkInput')) document.getElementById('modalVideoLinkInput').value = '';
+  if (document.getElementById('modalVideoViewsInput')) document.getElementById('modalVideoViewsInput').value = '';
   setTimeout(() => document.getElementById('modalSearchHandle').focus(), 100);
 }
 
@@ -1116,6 +1255,8 @@ function submitNewBlogger() {
   const phone = document.getElementById('modalPhoneInput').value.trim();
   const followers = document.getElementById('modalFollowersInput').value.trim();
   const note = document.getElementById('modalNoteInput').value.trim();
+  const videoLink = (document.getElementById('modalVideoLinkInput')?.value || '').trim();
+  const videoViewsVal = (document.getElementById('modalVideoViewsInput')?.value || '').trim();
 
   const cityNames = { 
     qarshi: 'Карши', 
@@ -1126,8 +1267,9 @@ function submitNewBlogger() {
   const cityName = cityNames[city] || 'Карши';
 
   const cleanH = val.replace(/[^a-zA-Z0-9_]/g, '');
+  const newBId = `custom_${cleanH}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
   const newB = {
-    id: `custom_${cleanH}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    id: newBId,
     handle: val,
     city: city,
     cityName: cityName,
@@ -1139,6 +1281,14 @@ function submitNewBlogger() {
 
   customBloggers.push(newB);
   localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
+
+  if (videoLink) {
+    videoLinks[newBId] = cleanVideoUrl(videoLink);
+    videoStatus[newBId] = true;
+    if (videoViewsVal) {
+      videoViews[newBId] = videoViewsVal;
+    }
+  }
 
   saveAllStatus();
   closeAddModal();
@@ -1220,6 +1370,7 @@ function openEditModal(id, event) {
   document.getElementById('editModalFollowers').value = b.followers || '';
   document.getElementById('editModalNote').value = b.note || '';
   document.getElementById('editModalVideoLink').value = videoLinks[id] || '';
+  document.getElementById('editModalVideoViews').value = videoViews[id] || '';
 
   // Checkboxes
   document.getElementById('editModalSentCheck').checked = !!sentStatus[id];
@@ -1264,6 +1415,7 @@ function saveEditedBlogger() {
   const followers = document.getElementById('editModalFollowers').value.trim();
   const note = document.getElementById('editModalNote').value.trim();
   const videoLink = document.getElementById('editModalVideoLink').value.trim();
+  const videoViewsVal = document.getElementById('editModalVideoViews').value.trim();
 
   const cityNames = { 
     qarshi: 'Карши', 
@@ -1304,12 +1456,18 @@ function saveEditedBlogger() {
   if (isVoucher) voucherStatus[id] = true; else delete voucherStatus[id];
   if (isVideo || videoLink) videoStatus[id] = true; else delete videoStatus[id];
 
-  // 4. Update Video Link
+  // 4. Update Video Link and Views
   if (videoLink) {
     videoLinks[id] = cleanVideoUrl(videoLink);
     videoStatus[id] = true;
+    if (videoViewsVal) {
+      videoViews[id] = videoViewsVal;
+    } else {
+      delete videoViews[id];
+    }
   } else {
     delete videoLinks[id];
+    delete videoViews[id];
   }
 
   saveAllStatus();
@@ -1331,6 +1489,7 @@ function exportDatabaseState() {
     vouchers: voucherStatus,
     videos: videoStatus,
     links: videoLinks,
+    views: videoViews,
     trash: trashStatus,
     custom: customBloggers,
     edits: customEdits
