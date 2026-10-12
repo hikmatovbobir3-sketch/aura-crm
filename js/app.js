@@ -1505,6 +1505,7 @@ function exportDatabaseState() {
     videos: videoStatus,
     links: videoLinks,
     views: videoViews,
+    viewsRev: videoViewsRev,
     trash: trashStatus,
     custom: customBloggers,
     edits: customEdits
@@ -1520,4 +1521,71 @@ function exportDatabaseState() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('📥 Файл aura_state.json успешно скачан!');
+}
+
+function importDatabaseState(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== 'object') {
+        showToast('❌ Ошибка: неверный формат файла JSON');
+        return;
+      }
+
+      if (data.sent && typeof data.sent === 'object') {
+        delete data.sent['undefined'];
+        sentStatus = { ...sentStatus, ...data.sent };
+      }
+      if (data.vouchers && typeof data.vouchers === 'object') {
+        delete data.vouchers['undefined'];
+        voucherStatus = { ...voucherStatus, ...data.vouchers };
+      }
+      if (data.videos && typeof data.videos === 'object') {
+        delete data.videos['undefined'];
+        videoStatus = { ...videoStatus, ...data.videos };
+      }
+      if (data.links && typeof data.links === 'object') {
+        delete data.links['undefined'];
+        videoLinks = { ...videoLinks, ...data.links };
+      }
+      if (data.views && typeof data.views === 'object') {
+        delete data.views['undefined'];
+        videoViews = { ...videoViews, ...data.views };
+      }
+      if (data.viewsRev) {
+        videoViewsRev = Math.max(videoViewsRev, parseInt(data.viewsRev, 10) || 0);
+        localStorage.setItem('aura_video_views_rev', String(videoViewsRev));
+      }
+      if (data.trash && typeof data.trash === 'object') {
+        delete data.trash['undefined'];
+        trashStatus = { ...trashStatus, ...data.trash };
+      }
+      if (Array.isArray(data.custom)) {
+        data.custom.forEach(remoteB => {
+          if (remoteB && remoteB.handle) {
+            const exists = customBloggers.some(b => b.id === remoteB.id || (b.handle && b.handle.toLowerCase() === remoteB.handle.toLowerCase()));
+            if (!exists) customBloggers.push(remoteB);
+          }
+        });
+        localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
+      }
+      if (data.edits && typeof data.edits === 'object') {
+        for (const [eId, eData] of Object.entries(data.edits)) {
+          customEdits[eId] = { ...(customEdits[eId] || {}), ...eData };
+        }
+      }
+
+      saveAllStatus();
+      renderApp();
+      showToast('✓ База успешно импортирована и обновлена!');
+    } catch (err) {
+      showToast('❌ Ошибка чтения файла базы: ' + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
