@@ -26,15 +26,17 @@ let MESSAGE = localStorage.getItem('aura_custom_message') || `Ассалому �
   } catch (e) {}
 });
 
-let sentStatus = JSON.parse(localStorage.getItem('aura_sent_all') || '{}');
-let voucherStatus = JSON.parse(localStorage.getItem('aura_vouchers_all') || '{}');
-let videoStatus = JSON.parse(localStorage.getItem('aura_videos_all') || '{}');
-let videoLinks = JSON.parse(localStorage.getItem('aura_video_links') || '{}');
-let videoViews = JSON.parse(localStorage.getItem('aura_video_views') || '{}');
-let videoViewsRev = parseInt(localStorage.getItem('aura_video_views_rev') || '0', 10) || 0;
-let trashStatus = JSON.parse(localStorage.getItem('aura_trash_ids') || '{}');
-let customEdits = JSON.parse(localStorage.getItem('aura_custom_edits') || '{}');
-let customBloggers = JSON.parse(localStorage.getItem('aura_custom_bloggers') || '[]');
+const _init = (typeof window !== 'undefined' && window.AURA_INITIAL_STATE && typeof window.AURA_INITIAL_STATE === 'object') ? window.AURA_INITIAL_STATE : {};
+
+let sentStatus = JSON.parse(localStorage.getItem('aura_sent_all') || 'null') || { ...(_init.sent || {}) };
+let voucherStatus = JSON.parse(localStorage.getItem('aura_vouchers_all') || 'null') || { ...(_init.vouchers || {}) };
+let videoStatus = JSON.parse(localStorage.getItem('aura_videos_all') || 'null') || { ...(_init.videos || {}) };
+let videoLinks = JSON.parse(localStorage.getItem('aura_video_links') || 'null') || { ...(_init.links || {}) };
+let videoViews = JSON.parse(localStorage.getItem('aura_video_views') || 'null') || { ...(_init.views || {}) };
+let videoViewsRev = parseInt(localStorage.getItem('aura_video_views_rev') || String(_init.viewsRev || 0), 10) || 0;
+let trashStatus = JSON.parse(localStorage.getItem('aura_trash_ids') || 'null') || { ...(_init.trash || {}) };
+let customEdits = JSON.parse(localStorage.getItem('aura_custom_edits') || 'null') || { ...(_init.edits || {}) };
+let customBloggers = JSON.parse(localStorage.getItem('aura_custom_bloggers') || 'null') || [ ...(_init.custom || []) ];
 
 let editingVideoId = null;
 
@@ -191,8 +193,13 @@ async function loadStateFromServer() {
       } catch (e) {}
     }
 
-    if (!res || !res.ok) return;
-    const data = await res.json();
+    let data = null;
+    if (res && res.ok) {
+      try { data = await res.json(); } catch (e) {}
+    } else if (typeof window !== 'undefined' && window.AURA_INITIAL_STATE && typeof window.AURA_INITIAL_STATE === 'object') {
+      data = window.AURA_INITIAL_STATE;
+    }
+
     if (!data || typeof data !== 'object') return;
 
     let hasDiff = false;
@@ -611,10 +618,10 @@ function renderApp() {
     const bId = b.id || `b_${idx}`;
     const isSent = !!sentStatus[bId];
     const isVoucher = !!voucherStatus[bId];
-    const isVideo = !!videoStatus[bId] || !!videoLinks[bId];
+    const isVideo = !!videoStatus[bId] || !!videoLinks[bId] || !!b.videoLink;
     const isTrash = !!trashStatus[bId];
-    const rawVideoLink = videoLinks[bId] || '';
-    const rawViews = (videoViews[bId] || '').toString().trim();
+    const rawVideoLink = videoLinks[bId] || b.videoLink || '';
+    const rawViews = (videoViews[bId] || b.videoViews || '').toString().trim();
     const isEditingThisVideo = (editingVideoId === bId);
     const followersVal = getBloggerFollowers(b);
     const displayNote = getBloggerDisplayNote(b, followersVal);

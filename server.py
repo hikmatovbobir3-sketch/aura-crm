@@ -64,6 +64,12 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                 data = json.loads(body.decode('utf-8'))
                 with open(STATE_FILE, 'w', encoding='utf-8') as f:
                     json.dump(data, f, ensure_ascii=False, indent=2)
+                state_js = os.path.join(BASE_DIR, 'js', 'aura_initial_state.js')
+                try:
+                    with open(state_js, 'w', encoding='utf-8') as f:
+                        f.write('// Auto-synchronized initial state for AURA CRM\nwindow.AURA_INITIAL_STATE = ' + json.dumps(data, ensure_ascii=False, indent=2) + ';\n')
+                except Exception:
+                    pass
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
