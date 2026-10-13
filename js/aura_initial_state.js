@@ -1,7 +1,7 @@
 // Auto-synchronized initial state for AURA CRM
 window.AURA_INITIAL_STATE = {
   "sent": {
-    "q1": true,
+    "q1": false,
     "q2": true,
     "q3": false,
     "q4": true,
@@ -114,7 +114,7 @@ window.AURA_INITIAL_STATE = {
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
-    "q1": true
+    "q1": false
   },
   "videos": {
     "q2": false,
@@ -137,7 +137,7 @@ window.AURA_INITIAL_STATE = {
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
-    "q1": true
+    "q1": false
   },
   "links": {
     "s_extra_2": "https://www.instagram.com/p/Dd-qZAeNqOn/",
