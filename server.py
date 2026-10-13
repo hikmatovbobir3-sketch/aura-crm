@@ -79,6 +79,27 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(500)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
+        elif self.path == '/api/push':
+            try:
+                git_path = r"C:\Users\user\AppData\Local\Programs\Git\cmd"
+                env = os.environ.copy()
+                if git_path not in env.get("PATH", ""):
+                    env["PATH"] = git_path + os.pathsep + env.get("PATH", "")
+
+                subprocess.run(['git', 'add', '.'], cwd=BASE_DIR, env=env, check=True)
+                subprocess.run(['git', 'commit', '-m', 'Update CRM database and state'], cwd=BASE_DIR, env=env)
+                res = subprocess.run(['git', 'push', 'origin', 'main'], cwd=BASE_DIR, env=env, capture_output=True, text=True)
+
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "pushed", "output": res.stdout}).encode('utf-8'))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
                 self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
         else:
             self.send_response(404)

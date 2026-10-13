@@ -1659,3 +1659,20 @@ function importDatabaseState(event) {
   };
   reader.readAsText(file);
 }
+
+async function pushChangesToGitHub() {
+  showToast('⏳ Сохраняем и отправляем на GitHub...');
+  await saveStateToServer();
+
+  try {
+    const url = (window.location.protocol === 'file:') ? 'http://localhost:3000/api/push' : '/api/push';
+    const res = await fetch(url, { method: 'POST' });
+    if (res.ok) {
+      showToast('🚀 ✓ Изменения успешно отправлены на GitHub!');
+    } else {
+      showToast('⚠️ Сервер не ответил. Запустите start.bat или используйте PUSH_TO_GITHUB.bat');
+    }
+  } catch (e) {
+    showToast('⚠️ Сервер start.bat не запущен! Нажмите «💾 Скачать базу», замените aura_state.json и запустите PUSH_TO_GITHUB.bat');
+  }
+}

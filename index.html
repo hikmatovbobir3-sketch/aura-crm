@@ -27,6 +27,7 @@
         <button class="btn-header btn-header-primary" onclick="openAddModal()">➕ Добавить блогера</button>
         <button class="btn-header" onclick="exportDatabaseState()" title="Скачать актуальную базу в файл aura_state.json">💾 Скачать базу</button>
         <button class="btn-header" onclick="document.getElementById('importFileInput').click()" title="Загрузить базу из сохраненного файла JSON">📂 Загрузить базу</button>
+        <button class="btn-header btn-header-push" onclick="pushChangesToGitHub()" title="Сохранить и отправить изменения на GitHub (через сервер start.bat)">🚀 На GitHub</button>
         <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importDatabaseState(event)">
       </div>
     </div>
@@ -216,9 +217,9 @@
   <span id="toastMsg">Уведомление</span>
 </div>
 
-<script src="js/aura_initial_state.js?v=112"></script>
-<script src="js/data.js?v=112"></script>
-<script src="js/app.js?v=113"></script>
+<script src="js/aura_initial_state.js?v=114"></script>
+<script src="js/data.js?v=114"></script>
+<script src="js/app.js?v=114"></script>
 
   <!-- Modal: Edit Blogger Completely -->
   <div class="modal-overlay" id="editModalOverlay" onclick="closeEditModalOnBackdrop(event)">

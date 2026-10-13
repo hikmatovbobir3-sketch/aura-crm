@@ -10,7 +10,20 @@ set "PATH=%PATH%;C:\Users\user\AppData\Local\Programs\Git\cmd"
 cd /d "C:\Users\user\Desktop\AURA_Outreach"
 
 echo [1/3] Proverka izmeneniy...
-git status --short
+set HAS_CHANGES=0
+for /f "tokens=*" %%i in ('git status --porcelain') do set HAS_CHANGES=1
+
+if "%HAS_CHANGES%"=="0" (
+    echo [!] Vnimanie: Na diske net novykh izmeneniy!
+    echo.
+    echo Esli vy delali izmeneniya v brauzere:
+    echo   1. Nazhmite na sayte knopku "💾 Skachat bazu"
+    echo   2. Peremestite skachannyy aura_state.json v etu papku s zamenoy
+    echo   3. Libo zapuskayte sayt cherez start.bat (on avtomaticheski soxranyaet vse na disk)
+    echo.
+) else (
+    git status --short
+)
 echo.
 
 set /p commit_msg="Vvedite opisanie (Enter dlya 'Update'): "

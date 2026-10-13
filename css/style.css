@@ -181,15 +181,24 @@ header {
 
 .btn-header-primary {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #000000;
   border-color: #f59e0b;
-  font-weight: 700;
+  color: #000 !important;
 }
-
 .btn-header-primary:hover {
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #000000;
-  box-shadow: 0 4px 14px var(--primary-glow);
+  color: #000 !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+
+.btn-header-push {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+  color: #fff !important;
+}
+.btn-header-push:hover {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
 /* Outreach Template Banner */
