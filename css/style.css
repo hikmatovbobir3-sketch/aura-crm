@@ -1399,6 +1399,44 @@ body.theme-light .video-views-count b {
   border-color: #60a5fa;
   transform: translateY(-1px);
 }
+.btn-duplicate-badge {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-duplicate-badge:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #34d399;
+  transform: translateY(-1px);
+}
+.card-dup-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+}
+.card-just-duplicated {
+  animation: cardDuplicatedFlash 1.8s ease;
+}
+@keyframes cardDuplicatedFlash {
+  0%, 40% { box-shadow: 0 0 0 2px #34d399; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
 .btn-edit-card {
   color: #60a5fa !important;
   border-color: rgba(96, 165, 250, 0.35) !important;

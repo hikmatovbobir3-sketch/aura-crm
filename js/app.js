@@ -81,10 +81,29 @@ function copyMasterText() {
 }
 
 function getAllBloggers() {
-  const raw = [...QARSHI_BLOGGERS, ...BUKHARA_BLOGGERS, ...SAMARKAND_BLOGGERS, ...NO_CONTACTS, ...customBloggers];
+  // Duplicated cards (dupOf) are placed right after their original card
+  const dupsByOriginal = {};
+  customBloggers.forEach(d => {
+    if (d && d.dupOf && d.id) {
+      (dupsByOriginal[d.dupOf] = dupsByOriginal[d.dupOf] || []).push(d);
+    }
+  });
+  const raw = [...QARSHI_BLOGGERS, ...BUKHARA_BLOGGERS, ...SAMARKAND_BLOGGERS, ...NO_CONTACTS, ...customBloggers.filter(b => b && !b.dupOf)];
   const seenIds = new Set();
   const seenHandles = new Set();
   const result = [];
+
+  const pushDuplicates = (originalId) => {
+    const dups = dupsByOriginal[originalId];
+    if (!dups) return;
+    delete dupsByOriginal[originalId];
+    dups.forEach(d => {
+      if (seenIds.has(d.id)) return;
+      seenIds.add(d.id);
+      result.push(customEdits[d.id] ? { ...d, ...customEdits[d.id] } : d);
+      pushDuplicates(d.id);
+    });
+  };
 
   for (let i = 0; i < raw.length; i++) {
     let b = raw[i];
@@ -118,9 +137,49 @@ function getAllBloggers() {
     seenIds.add(bId);
     if (handleClean) seenHandles.add(handleClean);
     result.push(b);
+    pushDuplicates(bId);
   }
 
+  // Duplicates whose original card no longer exists
+  Object.keys(dupsByOriginal).forEach(pushDuplicates);
+
   return result;
+}
+
+function isSameCustomBlogger(a, remoteB) {
+  if (a.id === remoteB.id) return true;
+  // Duplicated cards share a handle with the original, so match them only by id
+  if (a.dupOf || remoteB.dupOf) return false;
+  return !!(a.handle && a.handle.toLowerCase() === remoteB.handle.toLowerCase());
+}
+
+function duplicateBlogger(id, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const b = findBlogger(id);
+  if (!b) return;
+
+  const cleanH = (b.handle || '').replace(/[^a-zA-Z0-9_]/g, '');
+  const newBId = `custom_${cleanH}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+  // Copy profile & contacts; video link, views and statuses start empty for the new collaboration
+  const copy = { ...b, id: newBId, dupOf: b.id };
+  delete copy.videoLink;
+  delete copy.videoViews;
+  customBloggers.push(copy);
+  localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
+
+  saveAllStatus();
+  renderApp();
+  showToast(`✓ Карточка ${b.handle || ''} продублирована`);
+
+  const card = document.getElementById(`card_${newBId}`);
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('card-just-duplicated');
+    setTimeout(() => card.classList.remove('card-just-duplicated'), 1800);
+  }
 }
 
 function findBlogger(id) {
@@ -294,7 +353,7 @@ async function loadStateFromServer() {
     if (Array.isArray(data.custom) && data.custom.length > 0) {
       data.custom.forEach(remoteB => {
         if (remoteB && remoteB.handle) {
-          const exists = customBloggers.some(b => b.id === remoteB.id || (b.handle && b.handle.toLowerCase() === remoteB.handle.toLowerCase()));
+          const exists = customBloggers.some(b => isSameCustomBlogger(b, remoteB));
           if (!exists) {
             customBloggers.push(remoteB);
             hasDiff = true;
@@ -794,6 +853,10 @@ function renderApp() {
                 <button class="btn-edit-badge" onclick="openEditModal('${bId}', event)" title="Редактировать карточку">
                   ✏️ Изменить
                 </button>
+                <button class="btn-duplicate-badge" onclick="duplicateBlogger('${bId}', event)" title="Дублировать карточку (копия появится рядом)">
+                  +
+                </button>
+                ${b.dupOf ? `<span class="card-dup-badge" title="Копия карточки">копия</span>` : ''}
               </div>
               <div class="list-item-sub">
                 <span class="col-bio-text" title="${escapeHtml(b.note || '')}">${hlNote}</span>
@@ -1169,7 +1232,8 @@ function permanentDeleteBlogger(id, event) {
   }
 
   // Remove from customBloggers if present
-  customBloggers = customBloggers.filter(item => item.id !== id && (b ? item.handle !== b.handle : true));
+  // (duplicated cards share a handle with the original, so they are matched only by id)
+  customBloggers = customBloggers.filter(item => item.id !== id && (b && !b.dupOf && !item.dupOf ? item.handle !== b.handle : true));
   localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
 
   // Remove all statuses
@@ -1574,8 +1638,7 @@ function importDatabaseState(event) {
       if (Array.isArray(data.custom)) {
         data.custom.forEach(remoteB => {
           if (remoteB && remoteB.handle) {
-            const exists = customBloggers.some(b => b.id === remoteB.id || (b.handle && b.handle.toLowerCase() === remoteB.handle.toLowerCase()));
-            if (!exists) customBloggers.push(remoteB);
+            if (!customBloggers.some(b => isSameCustomBlogger(b, remoteB))) customBloggers.push(remoteB);
           }
         });
         localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
