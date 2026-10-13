@@ -91,7 +91,18 @@ window.AURA_INITIAL_STATE = {
     "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": true,
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
-    "s_extra_1": true
+    "s_extra_1": true,
+    "b24": true,
+    "b25": true,
+    "b23": true,
+    "b26": true,
+    "b31": true,
+    "b32": true,
+    "b34": true,
+    "b38": true,
+    "b40": true,
+    "b42": true,
+    "q92": true
   },
   "vouchers": {
     "b1": false,
@@ -114,7 +125,8 @@ window.AURA_INITIAL_STATE = {
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
-    "q1": false
+    "q1": false,
+    "b6": true
   },
   "videos": {
     "q2": false,
@@ -172,7 +184,7 @@ window.AURA_INITIAL_STATE = {
     "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "4 941",
     "s_extra_4": "564"
   },
-  "viewsRev": 0,
+  "viewsRev": 1791540000000,
   "trash": {
     "q3": true,
     "q7": true,
@@ -216,7 +228,19 @@ window.AURA_INITIAL_STATE = {
     "s228": true,
     "q5": true,
     "custom_dr_berdimuratova_1791804595112_vxzw1": true,
-    "custom_d1yora_di_1791806298414_85sdo": true
+    "custom_d1yora_di_1791806298414_85sdo": true,
+    "q1": true,
+    "b26": true,
+    "b27": true,
+    "b29": true,
+    "b30": true,
+    "b31": true,
+    "b33": true,
+    "b35": true,
+    "b36": true,
+    "b37": true,
+    "b39": true,
+    "b40": true
   },
   "custom": [
     {
