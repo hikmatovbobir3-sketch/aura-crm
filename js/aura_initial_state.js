@@ -102,7 +102,23 @@ window.AURA_INITIAL_STATE = {
     "b38": true,
     "b40": true,
     "b42": true,
-    "q92": true
+    "q92": true,
+    "qk7": true,
+    "qk8": true,
+    "qk17": true,
+    "qk26": true,
+    "qk56": true,
+    "qk57": true,
+    "qk62": true,
+    "qk67": true,
+    "qk76": true,
+    "qk79": true,
+    "qk90": true,
+    "qk13": true,
+    "qk3": true,
+    "qk14": true,
+    "qk16": true,
+    "qk18": true
   },
   "vouchers": {
     "b1": false,
@@ -126,7 +142,8 @@ window.AURA_INITIAL_STATE = {
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
     "q1": false,
-    "b6": true
+    "b6": true,
+    "q16": true
   },
   "videos": {
     "q2": false,
@@ -240,7 +257,29 @@ window.AURA_INITIAL_STATE = {
     "b36": true,
     "b37": true,
     "b39": true,
-    "b40": true
+    "b40": true,
+    "q4": true,
+    "q6": true,
+    "q8": true,
+    "q2": true,
+    "q12": true,
+    "q27": true,
+    "q28": true,
+    "qk8": true,
+    "qk26": true,
+    "qk56": true,
+    "qk62": true,
+    "qk67": true,
+    "qk78": true,
+    "qk79": true,
+    "qk90": true,
+    "qk76": true,
+    "qk57": true,
+    "q13": true,
+    "q25": true,
+    "q26": true,
+    "qk7": true,
+    "q32": true
   },
   "custom": [
     {
