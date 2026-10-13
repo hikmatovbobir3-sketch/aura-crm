@@ -212,7 +212,7 @@ async function saveStateToServer() {
   if (isSavingState) return;
   isSavingState = true;
   try {
-    await fetch(window.location.protocol === 'file:' ? 'http://localhost:3000/api/state' : '/api/state', {
+    await fetch(window.location.protocol === 'file:' ? 'http://localhost:3333/api/state' : '/api/state', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -240,7 +240,7 @@ async function loadStateFromServer() {
 
     // 1. Try local server endpoint if running on localhost or via file protocol
     if (window.location.protocol === 'file:') {
-      try { res = await fetch('http://localhost:3000/api/state'); } catch (e) {}
+      try { res = await fetch('http://localhost:3333/api/state'); } catch (e) {}
     } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       try { res = await fetch('/api/state'); } catch (e) {}
     }
@@ -1665,7 +1665,7 @@ async function pushChangesToGitHub() {
   await saveStateToServer();
 
   try {
-    const url = (window.location.protocol === 'file:') ? 'http://localhost:3000/api/push' : '/api/push';
+    const url = (window.location.protocol === 'file:') ? 'http://localhost:3333/api/push' : '/api/push';
     const res = await fetch(url, { method: 'POST' });
     if (res.ok) {
       showToast('🚀 ✓ Изменения успешно отправлены на GitHub!');

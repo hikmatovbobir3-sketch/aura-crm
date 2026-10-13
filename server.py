@@ -16,7 +16,7 @@ if hasattr(sys.stderr, 'reconfigure'):
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATE_FILE = os.path.join(BASE_DIR, 'aura_state.json')
-PORT = 3000
+PORT = 3333
 
 # Ensure state file exists
 if not os.path.exists(STATE_FILE):
