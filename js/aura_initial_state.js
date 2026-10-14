@@ -195,18 +195,25 @@ window.AURA_INITIAL_STATE = {
     "custom_nozima1_live_1791952350737_2qwxy": "https://www.instagram.com/reel/Debro7MtKCM/?exln=MWRnaDBuOWR3ODNveQ=="
   },
   "views": {
-    "s_extra_2": "1 824",
+    "s_extra_2": "1 900",
     "b79": "85 035",
     "custom_1791267810060": "1 490",
     "s8": "7 353",
     "s208": "7 353",
     "b_zar_official_1": "1 490",
-    "custom_1791268034184": "4 377",
-    "b_normengliyevv_5": "4 377",
-    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": "9 177",
+    "custom_1791268034184": "4 943",
+    "b_normengliyevv_5": "4 943",
+    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": "9 660",
     "s_extra_3": "3 122",
-    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "4 941",
-    "s_extra_4": "564"
+    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "6 225",
+    "s_extra_4": "919",
+    "custom_bexruzsharopovv_1791803367579_uei5t": "18 500",
+    "custom_nozima1_live_1791952034037_f8fnd": "1 400",
+    "custom_nozima1_live_1791952350737_2qwxy": "1 400",
+    "s_extra_1": "2 871",
+    "custom_d1yora_di_1791806312100_nu4hh": "13 900",
+    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": "6 225",
+    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": "9 660"
   },
   "trash": {
     "q3": true,
