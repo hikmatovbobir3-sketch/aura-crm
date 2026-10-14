@@ -661,7 +661,7 @@ function getFilteredList() {
   } else if (currentFilter === 'voucher') {
     list = list.filter(b => !!voucherStatus[b.id]);
   } else if (currentFilter === 'video') {
-    list = list.filter(b => !!videoStatus[b.id] || !!videoLinks[b.id]);
+    list = list.filter(b => isVideoMarked(b.id, b));
   } else if (currentFilter === 'has_tg') {
     list = list.filter(b => !!b.tg);
   } else if (currentFilter === 'has_phone') {
@@ -701,7 +701,7 @@ function getFilteredList() {
   } else if (currentSort === 'voucher_first') {
     list.sort((a, b) => (voucherStatus[b.id] ? 1 : 0) - (voucherStatus[a.id] ? 1 : 0));
   } else if (currentSort === 'video_first') {
-    list.sort((a, b) => ((videoStatus[b.id] || videoLinks[b.id]) ? 1 : 0) - ((videoStatus[a.id] || videoLinks[a.id]) ? 1 : 0));
+    list.sort((a, b) => (isVideoMarked(b.id, b) ? 1 : 0) - (isVideoMarked(a.id, a) ? 1 : 0));
   }
 
   return list;
@@ -755,7 +755,7 @@ function updateBadgesAndStats() {
   const total = activeList.length;
   const sentCount = activeList.filter(b => sentStatus[b.id]).length;
   const voucherCount = activeList.filter(b => voucherStatus[b.id]).length;
-  const videoCount = activeList.filter(b => videoStatus[b.id] || videoLinks[b.id]).length;
+  const videoCount = activeList.filter(b => isVideoMarked(b.id, b)).length;
   const pct = total > 0 ? Math.round((sentCount / total) * 100) : 0;
 
   const titleEl = document.getElementById('progressTitle');
@@ -819,7 +819,7 @@ function renderApp() {
     const bId = b.id || `b_${idx}`;
     const isSent = !!sentStatus[bId];
     const isVoucher = !!voucherStatus[bId];
-    const isVideo = !!videoStatus[bId] || !!videoLinks[bId] || !!b.videoLink;
+    const isVideo = isVideoMarked(bId, b);
     const isTrash = !!trashStatus[bId];
     const rawVideoLink = videoLinks[bId] || b.videoLink || '';
     const rawViews = (videoViews[bId] || b.videoViews || '').toString().trim();
@@ -1160,6 +1160,12 @@ function markDirectSent(id) {
   showToast('Текст скопирован в буфер! Открываю Direct...');
 }
 
+// A saved video link marks the card as "video" unless the mark was switched off explicitly (false)
+function isVideoMarked(id, b) {
+  if (videoStatus[id] === false) return false;
+  return !!videoStatus[id] || !!videoLinks[id] || !!(b && b.videoLink);
+}
+
 function toggleStatus(type, id) {
   if (!id || id === 'undefined') return;
   let state = false;
@@ -1170,8 +1176,8 @@ function toggleStatus(type, id) {
     voucherStatus[id] = !voucherStatus[id];
     state = voucherStatus[id];
   } else if (type === 'video') {
-    videoStatus[id] = !videoStatus[id];
-    state = videoStatus[id];
+    state = !isVideoMarked(id, findBlogger(id));
+    videoStatus[id] = state;
   }
 
   saveAllStatus();
@@ -1192,7 +1198,7 @@ function toggleStatus(type, id) {
     } else if (type === 'video') {
       const sw = card.querySelector('.lux-switch-pill:nth-child(3)');
       if (sw) sw.classList.toggle('is-active-video', state);
-      card.classList.toggle('is-video-item', state || !!videoLinks[id]);
+      card.classList.toggle('is-video-item', state);
       showToast(state ? '🎬 Отмечено: Видео снято!' : 'Снят статус видео');
     }
   }
@@ -1602,7 +1608,7 @@ function openEditModal(id, event) {
   // Checkboxes
   document.getElementById('editModalSentCheck').checked = !!sentStatus[id];
   document.getElementById('editModalVoucherCheck').checked = !!voucherStatus[id];
-  document.getElementById('editModalVideoCheck').checked = (!!videoStatus[id] || !!videoLinks[id]);
+  document.getElementById('editModalVideoCheck').checked = isVideoMarked(id, b);
 
   const overlay = document.getElementById('editModalOverlay');
   if (overlay) {
@@ -1681,12 +1687,11 @@ function saveEditedBlogger() {
 
   if (isSent) sentStatus[id] = true; else delete sentStatus[id];
   if (isVoucher) voucherStatus[id] = true; else delete voucherStatus[id];
-  if (isVideo || videoLink) videoStatus[id] = true; else delete videoStatus[id];
+  videoStatus[id] = isVideo;
 
   // 4. Update Video Link and Views
   if (videoLink) {
     videoLinks[id] = cleanVideoUrl(videoLink);
-    videoStatus[id] = true;
     if (videoViewsVal) {
       videoViews[id] = videoViewsVal;
     } else {
