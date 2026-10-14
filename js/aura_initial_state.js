@@ -1,7 +1,7 @@
 // Auto-synchronized initial state for AURA CRM
 window.AURA_INITIAL_STATE = {
   "sent": {
-    "q1": false,
+    "q1": true,
     "q2": true,
     "q3": false,
     "q4": true,
@@ -82,16 +82,17 @@ window.AURA_INITIAL_STATE = {
     "s8": true,
     "custom_1791268034184": false,
     "b_zar_official_1": true,
+    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": true,
+    "b_normengliyevv_5": true,
+    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": true,
+    "s_extra_4": true,
     "s_extra_3": true,
     "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": true,
-    "b_normengliyevv_5": true,
     "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": true,
-    "s_extra_4": true,
-    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": true,
-    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": true,
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
+    "q92": true,
     "b24": true,
     "b25": true,
     "b23": true,
@@ -102,7 +103,6 @@ window.AURA_INITIAL_STATE = {
     "b38": true,
     "b40": true,
     "b42": true,
-    "q92": true,
     "qk7": true,
     "qk8": true,
     "qk17": true,
@@ -118,7 +118,8 @@ window.AURA_INITIAL_STATE = {
     "qk3": true,
     "qk14": true,
     "qk16": true,
-    "qk18": true
+    "qk18": true,
+    "custom_nozima1_live_1791952034037_f8fnd": true
   },
   "vouchers": {
     "b1": false,
@@ -131,18 +132,18 @@ window.AURA_INITIAL_STATE = {
     "custom_1791268034184": false,
     "s208": true,
     "b_zar_official_1": true,
+    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": true,
+    "b_normengliyevv_5": true,
+    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": true,
+    "s_extra_4": true,
     "s_extra_3": true,
     "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": true,
-    "b_normengliyevv_5": true,
     "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": true,
-    "s_extra_4": true,
-    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": true,
-    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": true,
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
-    "q1": false,
     "b6": true,
+    "q1": true,
     "q16": true
   },
   "videos": {
@@ -157,16 +158,18 @@ window.AURA_INITIAL_STATE = {
     "b21": false,
     "b_zar_official_1": true,
     "b_normengliyevv_5": true,
-    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": true,
-    "s_extra_3": true,
-    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": true,
-    "s_extra_4": true,
     "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": true,
     "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": true,
+    "s_extra_3": true,
+    "s_extra_4": true,
+    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": false,
+    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": true,
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
-    "q1": false
+    "q1": true,
+    "custom_nozima1_live_1791952034037_f8fnd": true,
+    "custom_nozima1_live_1791952350737_2qwxy": true
   },
   "links": {
     "s_extra_2": "https://www.instagram.com/p/Dd-qZAeNqOn/",
@@ -177,15 +180,17 @@ window.AURA_INITIAL_STATE = {
     "s208": "https://www.instagram.com/reel/DeGh89AoCxq/",
     "b_zar_official_1": "https://www.instagram.com/reel/DeJFM4lNIC6/?utm_source=ig_web_copy_link&stkn=NTc4MTIwNjQ2YQ==",
     "b_normengliyevv_5": "https://www.instagram.com/reel/DeGSfohMGvY/",
-    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": "https://www.instagram.com/reel/DeJ-xp1Nzc3/",
-    "s_extra_3": "https://www.instagram.com/reel/DePHz5mIcMp/",
-    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "https://www.instagram.com/reel/DeOn-ufME-9/",
-    "s_extra_4": "https://www.instagram.com/reel/DePqYWVhZlH/",
     "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": "https://www.instagram.com/reel/DeOn-ufME-9/?utm_source=ig_web_copy_link&stkn=MzRlODBiNWFlZA==",
     "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": "https://www.instagram.com/reel/DeJ-xp1Nzc3/?stkn=MWQ3NTdrM3k3OWQwZA==",
+    "s_extra_3": "https://www.instagram.com/reel/DePHz5mIcMp/",
+    "s_extra_4": "https://www.instagram.com/reel/DePqYWVhZlH/",
+    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": "https://www.instagram.com/reel/DeJ-xp1Nzc3/",
+    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "https://www.instagram.com/reel/DeOn-ufME-9/",
     "custom_bexruzsharopovv_1791803367579_uei5t": "https://www.instagram.com/reel/DeWaIOmuEQv/?srtk=cGNxaTY1YnNzdHgw",
     "custom_d1yora_di_1791806312100_nu4hh": "https://www.instagram.com/reel/DeZArgjN9G9/?cplk=OWUybnBoOGUzcXFy",
-    "s_extra_1": "https://www.instagram.com/reel/DeTWkd_oRpG/?srtk=YXpycXJvcXlpYzB0"
+    "s_extra_1": "https://www.instagram.com/reel/DeTWkd_oRpG/?srtk=YXpycXJvcXlpYzB0",
+    "custom_nozima1_live_1791952034037_f8fnd": "https://www.instagram.com/reel/Debro7MtKCM/?exln=MWRnaDBuOWR3ODNveQ==",
+    "custom_nozima1_live_1791952350737_2qwxy": "https://www.instagram.com/reel/Debro7MtKCM/?exln=MWRnaDBuOWR3ODNveQ=="
   },
   "views": {
     "s_extra_2": "1 824",
@@ -201,7 +206,6 @@ window.AURA_INITIAL_STATE = {
     "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "4 941",
     "s_extra_4": "564"
   },
-  "viewsRev": 1791540000000,
   "trash": {
     "q3": true,
     "q7": true,
@@ -246,12 +250,12 @@ window.AURA_INITIAL_STATE = {
     "q5": true,
     "custom_dr_berdimuratova_1791804595112_vxzw1": true,
     "custom_d1yora_di_1791806298414_85sdo": true,
-    "q1": true,
-    "b26": true,
     "b27": true,
     "b29": true,
     "b30": true,
     "b31": true,
+    "q1": true,
+    "b26": true,
     "b33": true,
     "b35": true,
     "b36": true,
@@ -261,10 +265,15 @@ window.AURA_INITIAL_STATE = {
     "q4": true,
     "q6": true,
     "q8": true,
-    "q2": true,
     "q12": true,
-    "q27": true,
+    "q13": true,
+    "q32": true,
     "q28": true,
+    "q26": true,
+    "q25": true,
+    "q16": true,
+    "q2": true,
+    "q27": true,
     "qk8": true,
     "qk26": true,
     "qk56": true,
@@ -275,29 +284,77 @@ window.AURA_INITIAL_STATE = {
     "qk90": true,
     "qk76": true,
     "qk57": true,
-    "q13": true,
-    "q25": true,
-    "q26": true,
-    "qk7": true,
-    "q32": true
+    "qk7": true
   },
-  "custom": [
-    {
-      "id": "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl",
-      "handle": "@https://www.instagram.com/nagicha__9595/",
+  "edits": {
+    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": {
+      "handle": "@ruslaniraxmon",
+      "city": "bukhara",
+      "cityName": "Бухара",
+      "tg": "ruslanraxmon",
+      "phone": null,
+      "phone2": null,
+      "followers": null,
+      "note": null
+    },
+    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": {
+      "handle": "@nagicha__9595",
       "city": "bukhara",
       "cityName": "Бухара",
       "tg": "nagi95",
+      "phone": null,
+      "phone2": null,
+      "followers": null,
+      "note": null
+    },
+    "b_normengliyevv_5": {
+      "handle": "@normengliyev__",
+      "city": "qarshi",
+      "cityName": "Карши",
+      "tg": "normengliyevv_5",
+      "phone": null,
+      "phone2": null,
+      "followers": null,
+      "note": "UGC"
+    },
+    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": {
+      "handle": "@nagicha__9595",
+      "city": "bukhara",
+      "cityName": "Бухара",
+      "tg": "nagi95",
+      "phone": null,
+      "phone2": null,
+      "followers": null,
+      "note": null
+    },
+    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": {
+      "handle": "@ruslaniraxmon",
+      "city": "bukhara",
+      "cityName": "Бухара",
+      "tg": "ruslanraxmon",
+      "phone": null,
+      "phone2": null,
+      "followers": null,
+      "note": null
+    }
+  },
+  "custom": [
+    {
+      "id": "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w",
+      "handle": "@https://www.instagram.com/ruslaniraxmon/",
+      "city": "bukhara",
+      "cityName": "Бухара",
+      "tg": "ruslanraxmon",
       "phone": null,
       "followers": null,
       "note": null
     },
     {
-      "id": "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1",
-      "handle": "@https://www.instagram.com/ruslaniraxmon/",
+      "id": "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf",
+      "handle": "@https://www.instagram.com/nagicha__9595/",
       "city": "bukhara",
       "cityName": "Бухара",
-      "tg": "ruslanraxmon",
+      "tg": "nagi95",
       "phone": null,
       "followers": null,
       "note": null
@@ -347,58 +404,17 @@ window.AURA_INITIAL_STATE = {
       "cityName": "Бухара",
       "followers": "13 тыс.",
       "dupOf": "b79"
+    },
+    {
+      "id": "custom_nozima1_live_1791952034037_f8fnd",
+      "handle": "@nozima1_live",
+      "city": "samarkand",
+      "cityName": "Самарканд",
+      "tg": "MaxsudNozima",
+      "phone": null,
+      "followers": null,
+      "note": null
     }
   ],
-  "edits": {
-    "b_normengliyevv_5": {
-      "handle": "@normengliyev__",
-      "city": "qarshi",
-      "cityName": "Карши",
-      "tg": "normengliyevv_5",
-      "phone": null,
-      "phone2": null,
-      "followers": null,
-      "note": "UGC"
-    },
-    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": {
-      "handle": "@nagicha__9595",
-      "city": "bukhara",
-      "cityName": "Бухара",
-      "tg": "nagi95",
-      "phone": null,
-      "phone2": null,
-      "followers": null,
-      "note": null
-    },
-    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": {
-      "handle": "@ruslaniraxmon",
-      "city": "bukhara",
-      "cityName": "Бухара",
-      "tg": "ruslanraxmon",
-      "phone": null,
-      "phone2": null,
-      "followers": null,
-      "note": null
-    },
-    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": {
-      "handle": "@ruslaniraxmon",
-      "city": "bukhara",
-      "cityName": "Бухара",
-      "tg": "ruslanraxmon",
-      "phone": null,
-      "phone2": null,
-      "followers": null,
-      "note": null
-    },
-    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": {
-      "handle": "@nagicha__9595",
-      "city": "bukhara",
-      "cityName": "Бухара",
-      "tg": "nagi95",
-      "phone": null,
-      "phone2": null,
-      "followers": null,
-      "note": null
-    }
-  }
+  "viewsRev": 1791540000000
 };
