@@ -144,7 +144,8 @@ window.AURA_INITIAL_STATE = {
     "s_extra_1": true,
     "b6": true,
     "q1": false,
-    "q16": true
+    "q16": true,
+    "custom_nozima1_live_1791952034037_f8fnd": true
   },
   "videos": {
     "q2": false,
