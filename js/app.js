@@ -206,181 +206,281 @@ function saveAllStatus() {
   saveStateToServer();
 }
 
-let isSavingState = false;
+/* ==========================================================
+   GitHub sync: aura_state.json in the repo is the single source of truth.
+   Every change is merged (3-way, against the last synced copy) and
+   committed straight to GitHub; other devices pick it up by polling.
+   ========================================================== */
+const GH_REPO = 'hikmatovbobir3-sketch/aura-crm';
+const GH_BRANCH = 'main';
+const GH_STATE_PATH = 'aura_state.json';
+const GH_API_URL = `https://api.github.com/repos/${GH_REPO}/contents/${GH_STATE_PATH}`;
+const SYNC_MAP_SECTIONS = ['sent', 'vouchers', 'videos', 'links', 'views', 'trash', 'edits'];
 
-async function saveStateToServer() {
-  if (isSavingState) return;
-  isSavingState = true;
-  try {
-    await fetch(window.location.protocol === 'file:' ? 'http://localhost:3333/api/state' : '/api/state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sent: sentStatus,
-        vouchers: voucherStatus,
-        videos: videoStatus,
-        links: videoLinks,
-        views: videoViews,
-        viewsRev: videoViewsRev,
-        trash: trashStatus,
-        custom: customBloggers,
-        edits: customEdits
-      })
+// A browser that never stored anything locally has nothing worth merging on first sync
+const _hadLocalState = localStorage.getItem('aura_sent_all') !== null;
+
+let syncInFlight = false;
+let syncAgain = false;
+let syncTimer = null;
+let syncStatus = 'idle';
+
+function getGhToken() {
+  return (localStorage.getItem('aura_gh_token') || '').trim();
+}
+
+function stableStringify(v) {
+  if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+  if (v && typeof v === 'object') {
+    return '{' + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+  }
+  return JSON.stringify(v === undefined ? null : v);
+}
+
+function cloneState(s) {
+  return JSON.parse(JSON.stringify(s));
+}
+
+function currentState() {
+  return cloneState({
+    sent: sentStatus,
+    vouchers: voucherStatus,
+    videos: videoStatus,
+    links: videoLinks,
+    views: videoViews,
+    viewsRev: videoViewsRev,
+    trash: trashStatus,
+    custom: customBloggers,
+    edits: customEdits
+  });
+}
+
+function normalizeState(s) {
+  s = (s && typeof s === 'object') ? s : {};
+  const out = {};
+  SYNC_MAP_SECTIONS.forEach(sec => {
+    out[sec] = (s[sec] && typeof s[sec] === 'object' && !Array.isArray(s[sec])) ? { ...s[sec] } : {};
+    delete out[sec]['undefined'];
+  });
+  out.custom = Array.isArray(s.custom) ? s.custom.filter(b => b && b.id) : [];
+  out.viewsRev = parseInt(s.viewsRev || 0, 10) || 0;
+  return out;
+}
+
+function applyState(s) {
+  s = normalizeState(s);
+  sentStatus = s.sent;
+  voucherStatus = s.vouchers;
+  videoStatus = s.videos;
+  videoLinks = s.links;
+  videoViews = s.views;
+  videoViewsRev = s.viewsRev;
+  trashStatus = s.trash;
+  customEdits = s.edits;
+  customBloggers = s.custom;
+  localStorage.setItem('aura_sent_all', JSON.stringify(sentStatus));
+  localStorage.setItem('aura_vouchers_all', JSON.stringify(voucherStatus));
+  localStorage.setItem('aura_videos_all', JSON.stringify(videoStatus));
+  localStorage.setItem('aura_video_links', JSON.stringify(videoLinks));
+  localStorage.setItem('aura_video_views', JSON.stringify(videoViews));
+  localStorage.setItem('aura_video_views_rev', String(videoViewsRev));
+  localStorage.setItem('aura_trash_ids', JSON.stringify(trashStatus));
+  localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
+  localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
+}
+
+function getSyncBase() {
+  try { return JSON.parse(localStorage.getItem('aura_sync_base') || 'null'); } catch (e) { return null; }
+}
+
+function setSyncBase(s) {
+  localStorage.setItem('aura_sync_base', JSON.stringify(normalizeState(s)));
+}
+
+// Apply every change made between base and local on top of remote (additions, edits AND removals)
+function mergeStates(base, local, remote) {
+  base = normalizeState(base);
+  local = normalizeState(local);
+  const res = normalizeState(remote);
+  SYNC_MAP_SECTIONS.forEach(sec => {
+    const b = base[sec], l = local[sec], r = res[sec];
+    new Set([...Object.keys(b), ...Object.keys(l)]).forEach(k => {
+      if (stableStringify(b[k]) === stableStringify(l[k])) return;
+      if (k in l) r[k] = l[k]; else delete r[k];
     });
+  });
+  const bMap = new Map(base.custom.map(x => [x.id, x]));
+  const lMap = new Map(local.custom.map(x => [x.id, x]));
+  new Set([...bMap.keys(), ...lMap.keys()]).forEach(id => {
+    if (stableStringify(bMap.get(id)) === stableStringify(lMap.get(id))) return;
+    const idx = res.custom.findIndex(x => x.id === id);
+    if (lMap.has(id)) {
+      if (idx >= 0) res.custom[idx] = lMap.get(id); else res.custom.push(lMap.get(id));
+    } else if (idx >= 0) {
+      res.custom.splice(idx, 1);
+    }
+  });
+  res.viewsRev = Math.max(base.viewsRev, local.viewsRev, res.viewsRev);
+  return res;
+}
+
+// First sync of a browser that has old local data but no sync history: only add what is missing
+function unionStates(remote, local) {
+  const res = normalizeState(remote);
+  local = normalizeState(local);
+  SYNC_MAP_SECTIONS.forEach(sec => {
+    Object.entries(local[sec]).forEach(([k, v]) => {
+      if (v && !(k in res[sec])) res[sec][k] = v;
+    });
+  });
+  local.custom.forEach(lb => {
+    if (lb.handle && !res.custom.some(b => isSameCustomBlogger(b, lb))) res.custom.push(lb);
+  });
+  return res;
+}
+
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+function base64ToUtf8(b64) {
+  const bin = atob((b64 || '').replace(/\s/g, ''));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+
+function ghHeaders() {
+  const h = { 'Accept': 'application/vnd.github+json' };
+  const token = getGhToken();
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  return h;
+}
+
+async function ghFetchState() {
+  const res = await fetch(`${GH_API_URL}?ref=${GH_BRANCH}&t=${Date.now()}`, { headers: ghHeaders(), cache: 'no-store' });
+  if (res.status === 401) throw new Error('bad_token');
+  if (!res.ok) throw new Error('fetch_' + res.status);
+  const json = await res.json();
+  return { sha: json.sha, state: normalizeState(JSON.parse(base64ToUtf8(json.content))) };
+}
+
+async function ghPutState(state, sha) {
+  const res = await fetch(GH_API_URL, {
+    method: 'PUT',
+    headers: { ...ghHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: 'CRM: обновление базы',
+      content: utf8ToBase64(JSON.stringify(state, null, 2) + '\n'),
+      sha,
+      branch: GH_BRANCH
+    })
+  });
+  if (res.status === 409 || res.status === 422) return null; // someone else saved first - retry with fresh copy
+  if (res.status === 401 || res.status === 403) throw new Error('bad_token');
+  if (!res.ok) throw new Error('put_' + res.status);
+  return (await res.json()).content.sha;
+}
+
+function setSyncStatus(status) {
+  syncStatus = status;
+  const btn = document.getElementById('syncStatusBtn');
+  if (!btn) return;
+  const labels = {
+    idle: '☁️ GitHub',
+    saving: '⏳ Сохранение…',
+    ok: '✅ Сохранено в GitHub',
+    pending: '⏳ Ждёт отправки',
+    no_token: '🔑 Подключить GitHub',
+    bad_token: '⚠️ Ключ GitHub неверный',
+    offline: '⚠️ Нет связи, повторим'
+  };
+  btn.textContent = labels[status] || labels.idle;
+  btn.classList.toggle('btn-header-push', status === 'no_token' || status === 'bad_token');
+}
+
+function scheduleSync(delay) {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncWithGitHub, delay);
+}
+
+async function syncWithGitHub() {
+  if (syncInFlight) { syncAgain = true; return; }
+  syncInFlight = true;
+  const token = getGhToken();
+  try {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const snapshot = currentState();
+      const base = getSyncBase();
+      const remote = await ghFetchState();
+      const dirty = base ? stableStringify(normalizeState(base)) !== stableStringify(normalizeState(snapshot)) : _hadLocalState;
+
+      let merged;
+      if (!dirty) merged = remote.state;
+      else if (base) merged = mergeStates(base, snapshot, remote.state);
+      else merged = unionStates(remote.state, snapshot);
+
+      if (dirty && !token) {
+        setSyncStatus('no_token');
+        return;
+      }
+
+      let newSha = remote.sha;
+      if (stableStringify(merged) !== stableStringify(remote.state)) {
+        setSyncStatus('saving');
+        newSha = await ghPutState(merged, remote.sha);
+        if (!newSha) continue;
+      }
+
+      // Keep any change the user made while this sync was running
+      const finalState = mergeStates(snapshot, currentState(), merged);
+      setSyncBase(merged);
+      localStorage.setItem('aura_sync_sha', newSha);
+      if (stableStringify(finalState) !== stableStringify(normalizeState(currentState()))) {
+        applyState(finalState);
+        renderApp();
+      }
+      if (stableStringify(finalState) !== stableStringify(merged)) syncAgain = true;
+      setSyncStatus(token ? 'ok' : 'no_token');
+      return;
+    }
+    syncAgain = true;
   } catch (e) {
+    setSyncStatus(e.message === 'bad_token' ? 'bad_token' : 'offline');
+    if (e.message !== 'bad_token') scheduleSync(15000);
   } finally {
-    isSavingState = false;
+    syncInFlight = false;
+    if (syncAgain) {
+      syncAgain = false;
+      scheduleSync(500);
+    }
   }
 }
 
-async function loadStateFromServer() {
-  if (isSavingState) return;
-  try {
-    let res = null;
+function saveStateToServer() {
+  setSyncStatus(getGhToken() ? 'pending' : 'no_token');
+  scheduleSync(1200);
+}
 
-    // 1. Try local server endpoint if running on localhost or via file protocol
-    if (window.location.protocol === 'file:') {
-      try { res = await fetch('http://localhost:3333/api/state'); } catch (e) {}
-    } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      try { res = await fetch('/api/state'); } catch (e) {}
-    }
+function openGhTokenModal() {
+  const overlay = document.getElementById('ghTokenOverlay');
+  if (!overlay) return;
+  document.getElementById('ghTokenInput').value = getGhToken();
+  overlay.classList.add('open');
+}
 
-    // 2. Fallback for GitHub Pages or static host: load aura_state.json from repository
-    if (!res || !res.ok) {
-      try {
-        res = await fetch('aura_state.json?t=' + Date.now());
-      } catch (e) {}
-    }
+function closeGhTokenModal() {
+  const overlay = document.getElementById('ghTokenOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
 
-    let data = null;
-    if (res && res.ok) {
-      try { data = await res.json(); } catch (e) {}
-    } else if (typeof window !== 'undefined' && window.AURA_INITIAL_STATE && typeof window.AURA_INITIAL_STATE === 'object') {
-      data = window.AURA_INITIAL_STATE;
-    }
-
-    if (!data || typeof data !== 'object') return;
-
-    let hasDiff = false;
-
-    // Merge sent
-    if (data.sent && typeof data.sent === 'object') {
-      delete data.sent['undefined'];
-      for (const [k, v] of Object.entries(data.sent)) {
-        if (!sentStatus[k] && v) {
-          sentStatus[k] = true;
-          hasDiff = true;
-        }
-      }
-      localStorage.setItem('aura_sent_all', JSON.stringify(sentStatus));
-    }
-
-    // Merge vouchers
-    if (data.vouchers && typeof data.vouchers === 'object') {
-      delete data.vouchers['undefined'];
-      for (const [k, v] of Object.entries(data.vouchers)) {
-        if (!voucherStatus[k] && v) {
-          voucherStatus[k] = true;
-          hasDiff = true;
-        }
-      }
-      localStorage.setItem('aura_vouchers_all', JSON.stringify(voucherStatus));
-    }
-
-    // Merge videos
-    if (data.videos && typeof data.videos === 'object') {
-      delete data.videos['undefined'];
-      for (const [k, v] of Object.entries(data.videos)) {
-        if (!videoStatus[k] && v) {
-          videoStatus[k] = true;
-          hasDiff = true;
-        }
-      }
-      localStorage.setItem('aura_videos_all', JSON.stringify(videoStatus));
-    }
-
-    // Newer video revision on server (e.g. refreshed real view counts / fixed links) overrides local values
-    const remoteRev = parseInt(data.viewsRev || 0, 10) || 0;
-    const serverWins = remoteRev > videoViewsRev;
-    if (serverWins) {
-      videoViewsRev = remoteRev;
-      localStorage.setItem('aura_video_views_rev', String(videoViewsRev));
-    }
-
-    // Merge links
-    if (data.links && typeof data.links === 'object') {
-      delete data.links['undefined'];
-      for (const [k, v] of Object.entries(data.links)) {
-        if (serverWins && v && videoLinks[k] !== v) {
-          videoLinks[k] = v;
-          hasDiff = true;
-        } else if (!videoLinks[k] && v) {
-          videoLinks[k] = v;
-          hasDiff = true;
-        }
-      }
-      localStorage.setItem('aura_video_links', JSON.stringify(videoLinks));
-    }
-
-    // Merge views
-    if (data.views && typeof data.views === 'object') {
-      delete data.views['undefined'];
-      for (const [k, v] of Object.entries(data.views)) {
-        if (serverWins && videoViews[k] !== v) {
-          if (v) videoViews[k] = v; else delete videoViews[k];
-          hasDiff = true;
-        } else if (!videoViews[k] && v) {
-          videoViews[k] = v;
-          hasDiff = true;
-        }
-      }
-      localStorage.setItem('aura_video_views', JSON.stringify(videoViews));
-    }
-
-    // Merge trash
-    if (data.trash && typeof data.trash === 'object') {
-      delete data.trash['undefined'];
-      for (const [k, v] of Object.entries(data.trash)) {
-        if (v && !trashStatus[k]) {
-          trashStatus[k] = true;
-          hasDiff = true;
-        }
-      }
-      localStorage.setItem('aura_trash_ids', JSON.stringify(trashStatus));
-    }
-
-    // MERGE custom bloggers (NEVER delete local custom bloggers!)
-    if (Array.isArray(data.custom) && data.custom.length > 0) {
-      data.custom.forEach(remoteB => {
-        if (remoteB && remoteB.handle) {
-          const exists = customBloggers.some(b => isSameCustomBlogger(b, remoteB));
-          if (!exists) {
-            customBloggers.push(remoteB);
-            hasDiff = true;
-          }
-        }
-      });
-      localStorage.setItem('aura_custom_bloggers', JSON.stringify(customBloggers));
-    }
-
-    if (data.edits && typeof data.edits === 'object') {
-      let editsChanged = false;
-      for (const [eId, eData] of Object.entries(data.edits)) {
-        if (!customEdits[eId] || JSON.stringify(customEdits[eId]) !== JSON.stringify(eData)) {
-          customEdits[eId] = { ...(customEdits[eId] || {}), ...eData };
-          editsChanged = true;
-        }
-      }
-      if (editsChanged) {
-        localStorage.setItem('aura_custom_edits', JSON.stringify(customEdits));
-        hasDiff = true;
-      }
-    }
-
-    if (hasDiff) {
-      renderApp();
-    }
-  } catch (e) {}
+function saveGhToken() {
+  const val = document.getElementById('ghTokenInput').value.trim();
+  if (val) localStorage.setItem('aura_gh_token', val); else localStorage.removeItem('aura_gh_token');
+  closeGhTokenModal();
+  showToast(val ? '✓ GitHub подключён, синхронизируем…' : 'Ключ GitHub удалён');
+  syncWithGitHub();
 }
 
 function parseFollowerNumber(val) {
@@ -1420,13 +1520,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const msgEl = document.getElementById('sampleText');
   if (msgEl) msgEl.innerText = MESSAGE;
   renderApp();
-  loadStateFromServer();
+  setSyncStatus(getGhToken() ? 'idle' : 'no_token');
+  syncWithGitHub();
 
-  // Only poll if running with a real local server, avoid destructive polling on static GitHub Pages
-  const isLocalBackend = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  if (isLocalBackend) {
-    setInterval(loadStateFromServer, 3000);
-  }
+  // Pick up changes made on other devices (unauthenticated GitHub API allows only 60 requests/hour)
+  setInterval(() => { if (!document.hidden) syncWithGitHub(); }, getGhToken() ? 20000 : 90000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWithGitHub(); });
 });
 
 /* ==========================================================
@@ -1660,19 +1759,8 @@ function importDatabaseState(event) {
   reader.readAsText(file);
 }
 
-async function pushChangesToGitHub() {
-  showToast('⏳ Сохраняем и отправляем на GitHub...');
-  await saveStateToServer();
-
-  try {
-    const url = (window.location.protocol === 'file:') ? 'http://localhost:3333/api/push' : '/api/push';
-    const res = await fetch(url, { method: 'POST' });
-    if (res.ok) {
-      showToast('🚀 ✓ Изменения успешно отправлены на GitHub!');
-    } else {
-      showToast('⚠️ Сервер не ответил. Запустите start.bat или используйте PUSH_TO_GITHUB.bat');
-    }
-  } catch (e) {
-    showToast('⚠️ Сервер start.bat не запущен! Нажмите «💾 Скачать базу», замените aura_state.json и запустите PUSH_TO_GITHUB.bat');
-  }
+function pushChangesToGitHub() {
+  if (!getGhToken()) { openGhTokenModal(); return; }
+  showToast('⏳ Синхронизируем с GitHub...');
+  syncWithGitHub();
 }

@@ -112,6 +112,24 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
 
+def run_git_autopull():
+    # The site saves straight to GitHub; keep this folder in step with it
+    git_path = r"C:\Users\user\AppData\Local\Programs\Git\cmd"
+    env = os.environ.copy()
+    if git_path not in env.get("PATH", ""):
+        env["PATH"] = git_path + os.pathsep + env.get("PATH", "")
+    while True:
+        try:
+            res = subprocess.run(['git', 'pull', '--rebase', '--autostash', 'origin', 'main'],
+                                 cwd=BASE_DIR, env=env, capture_output=True, text=True, timeout=60)
+            if res.returncode != 0:
+                print("[!] git pull failed:", (res.stderr or res.stdout).strip())
+            elif 'Already up to date' not in res.stdout:
+                print("[OK] Pulled latest database from GitHub")
+        except Exception as e:
+            print("[!] git pull error:", e)
+        time.sleep(30)
+
 def run_server():
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), CustomHandler) as httpd:
@@ -166,5 +184,6 @@ def run_tunnel():
 if __name__ == '__main__':
     t = threading.Thread(target=run_server, daemon=True)
     t.start()
+    threading.Thread(target=run_git_autopull, daemon=True).start()
     time.sleep(1)
     run_tunnel()
