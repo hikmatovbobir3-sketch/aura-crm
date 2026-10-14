@@ -171,7 +171,7 @@ window.AURA_INITIAL_STATE = {
     "q1": false,
     "custom_nozima1_live_1791952034037_f8fnd": true,
     "custom_nozima1_live_1791952350737_2qwxy": true,
-    "b6": true
+    "b6": false
   },
   "links": {
     "s_extra_2": "https://www.instagram.com/p/Dd-qZAeNqOn/",
