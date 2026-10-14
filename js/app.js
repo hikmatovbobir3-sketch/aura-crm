@@ -207,10 +207,18 @@ function saveAllStatus() {
 }
 
 /* ==========================================================
-   GitHub sync: aura_state.json in the repo is the single source of truth.
-   Every change is merged (3-way, against the last synced copy) and
-   committed straight to GitHub; other devices pick it up by polling.
+   Sync: aura_state.json is the single source of truth.
+   Every change is merged (3-way, against the last synced copy) and saved
+   - through the local server (start.bat), which commits & pushes it to GitHub, or
+   - straight to GitHub via its API when opened on GitHub Pages (needs a key).
+   Other devices pick changes up by polling.
    ========================================================== */
+// '' = same origin (localhost / tunnel), null = no local server (GitHub Pages)
+const LOCAL_SERVER = window.location.protocol === 'file:' ? 'http://localhost:3333'
+  : (window.location.hostname.endsWith('github.io') ? null : '');
+const USE_LOCAL_SERVER = LOCAL_SERVER !== null;
+let lastGitStatus = null;
+
 const GH_REPO = 'hikmatovbobir3-sketch/aura-crm';
 const GH_BRANCH = 'main';
 const GH_STATE_PATH = 'aura_state.json';
@@ -383,6 +391,33 @@ async function ghPutState(state, sha) {
   return (await res.json()).content.sha;
 }
 
+async function fetchRemoteState() {
+  if (!USE_LOCAL_SERVER) return ghFetchState();
+  const res = await fetch(`${LOCAL_SERVER}/api/sync?t=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('fetch_' + res.status);
+  const json = await res.json();
+  lastGitStatus = json.git || null;
+  return { sha: json.sha, state: normalizeState(json.state) };
+}
+
+async function putRemoteState(state, sha) {
+  if (!USE_LOCAL_SERVER) return ghPutState(state, sha);
+  const res = await fetch(`${LOCAL_SERVER}/api/sync`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sha, state })
+  });
+  if (res.status === 409) return null;
+  if (!res.ok) throw new Error('put_' + res.status);
+  const json = await res.json();
+  lastGitStatus = json.git || lastGitStatus;
+  return json.sha;
+}
+
+function canSaveRemotely() {
+  return USE_LOCAL_SERVER || !!getGhToken();
+}
+
 function setSyncStatus(status) {
   syncStatus = status;
   const btn = document.getElementById('syncStatusBtn');
@@ -390,14 +425,21 @@ function setSyncStatus(status) {
   const labels = {
     idle: '☁️ GitHub',
     saving: '⏳ Сохранение…',
-    ok: '✅ Сохранено в GitHub',
+    ok: USE_LOCAL_SERVER ? '✅ Сохранено' : '✅ Сохранено в GitHub',
     pending: '⏳ Ждёт отправки',
     no_token: '🔑 Подключить GitHub',
     bad_token: '⚠️ Ключ GitHub неверный',
-    offline: '⚠️ Нет связи, повторим'
+    offline: USE_LOCAL_SERVER ? '⚠️ Запустите start.bat' : '⚠️ Нет связи, повторим',
+    git_error: '⚠️ Не ушло в GitHub'
   };
+  if (status === 'ok' && USE_LOCAL_SERVER && lastGitStatus && !lastGitStatus.ok) status = 'git_error';
   btn.textContent = labels[status] || labels.idle;
-  btn.classList.toggle('btn-header-push', status === 'no_token' || status === 'bad_token');
+  btn.title = USE_LOCAL_SERVER
+    ? 'Изменения сохраняются на компьютер и автоматически отправляются в GitHub.' + (lastGitStatus && lastGitStatus.message ? '\nGitHub: ' + lastGitStatus.message : '')
+    : 'Изменения автоматически сохраняются в GitHub. Нажмите, чтобы синхронизировать сейчас';
+  btn.classList.toggle('btn-header-push', ['no_token', 'bad_token', 'offline', 'git_error'].includes(status));
+  const keyBtn = document.getElementById('ghTokenBtn');
+  if (keyBtn) keyBtn.style.display = USE_LOCAL_SERVER ? 'none' : '';
 }
 
 function scheduleSync(delay) {
@@ -408,12 +450,12 @@ function scheduleSync(delay) {
 async function syncWithGitHub() {
   if (syncInFlight) { syncAgain = true; return; }
   syncInFlight = true;
-  const token = getGhToken();
+  const token = canSaveRemotely();
   try {
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot = currentState();
       const base = getSyncBase();
-      const remote = await ghFetchState();
+      const remote = await fetchRemoteState();
       const dirty = base ? stableStringify(normalizeState(base)) !== stableStringify(normalizeState(snapshot)) : _hadLocalState;
 
       let merged;
@@ -429,7 +471,7 @@ async function syncWithGitHub() {
       let newSha = remote.sha;
       if (stableStringify(merged) !== stableStringify(remote.state)) {
         setSyncStatus('saving');
-        newSha = await ghPutState(merged, remote.sha);
+        newSha = await putRemoteState(merged, remote.sha);
         if (!newSha) continue;
       }
 
@@ -459,8 +501,8 @@ async function syncWithGitHub() {
 }
 
 function saveStateToServer() {
-  setSyncStatus(getGhToken() ? 'pending' : 'no_token');
-  scheduleSync(1200);
+  setSyncStatus(canSaveRemotely() ? 'pending' : 'no_token');
+  scheduleSync(USE_LOCAL_SERVER ? 400 : 1200);
 }
 
 function openGhTokenModal() {
@@ -1520,11 +1562,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const msgEl = document.getElementById('sampleText');
   if (msgEl) msgEl.innerText = MESSAGE;
   renderApp();
-  setSyncStatus(getGhToken() ? 'idle' : 'no_token');
+  setSyncStatus(canSaveRemotely() ? 'idle' : 'no_token');
   syncWithGitHub();
 
   // Pick up changes made on other devices (unauthenticated GitHub API allows only 60 requests/hour)
-  setInterval(() => { if (!document.hidden) syncWithGitHub(); }, getGhToken() ? 20000 : 90000);
+  setInterval(() => { if (!document.hidden) syncWithGitHub(); }, USE_LOCAL_SERVER ? 4000 : (getGhToken() ? 20000 : 90000));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWithGitHub(); });
 });
 
@@ -1760,7 +1802,8 @@ function importDatabaseState(event) {
 }
 
 function pushChangesToGitHub() {
-  if (!getGhToken()) { openGhTokenModal(); return; }
+  if (!canSaveRemotely()) { openGhTokenModal(); return; }
   showToast('⏳ Синхронизируем с GitHub...');
+  if (USE_LOCAL_SERVER) fetch(`${LOCAL_SERVER}/api/push`, { method: 'POST' }).catch(() => {});
   syncWithGitHub();
 }

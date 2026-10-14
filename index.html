@@ -28,7 +28,7 @@
         <button class="btn-header" onclick="exportDatabaseState()" title="Скачать актуальную базу в файл aura_state.json">💾 Скачать базу</button>
         <button class="btn-header" onclick="document.getElementById('importFileInput').click()" title="Загрузить базу из сохраненного файла JSON">📂 Загрузить базу</button>
         <button class="btn-header" id="syncStatusBtn" onclick="pushChangesToGitHub()" title="Изменения автоматически сохраняются в GitHub. Нажмите, чтобы синхронизировать сейчас">☁️ GitHub</button>
-        <button class="btn-header" onclick="openGhTokenModal()" title="Ключ доступа GitHub для сохранения">🔑</button>
+        <button class="btn-header" id="ghTokenBtn" onclick="openGhTokenModal()" title="Ключ доступа GitHub для сохранения">🔑</button>
         <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importDatabaseState(event)">
       </div>
     </div>
@@ -235,9 +235,9 @@
   <span id="toastMsg">Уведомление</span>
 </div>
 
-<script src="js/aura_initial_state.js?v=119"></script>
-<script src="js/data.js?v=119"></script>
-<script src="js/app.js?v=119"></script>
+<script src="js/aura_initial_state.js?v=120"></script>
+<script src="js/data.js?v=120"></script>
+<script src="js/app.js?v=120"></script>
 
   <!-- Modal: Edit Blogger Completely -->
   <div class="modal-overlay" id="editModalOverlay" onclick="closeEditModalOnBackdrop(event)">
