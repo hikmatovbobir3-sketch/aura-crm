@@ -9,13 +9,24 @@ import time
 import hashlib
 import sys
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Started in the background (pythonw, from Windows startup): there is no console, so log to a file
+if sys.stdout is None or sys.stderr is None:
+    _log_path = os.path.join(BASE_DIR, 'server.log')
+    if os.path.exists(_log_path) and os.path.getsize(_log_path) > 1_000_000:
+        os.replace(_log_path, _log_path + '.old')
+    sys.stdout = sys.stderr = open(_log_path, 'a', encoding='utf-8', buffering=1)
+    print(f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')} server started in background =====")
+
 # Ensure UTF-8 output for Windows console
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 if hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Child processes (git, cloudflared) must not pop up console windows when running in the background
+NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 STATE_FILE = os.path.join(BASE_DIR, 'aura_state.json')
 PORT = int(os.environ.get('AURA_PORT', 3333))
 
@@ -51,7 +62,8 @@ if _git_dir not in GIT_ENV.get("PATH", ""):
 
 def git(*args, timeout=60):
     return subprocess.run(['git', *args], cwd=BASE_DIR, env=GIT_ENV, capture_output=True,
-                          text=True, encoding='utf-8', errors='replace', timeout=timeout)
+                          text=True, encoding='utf-8', errors='replace', timeout=timeout,
+                          creationflags=NO_WINDOW)
 
 
 def canon(v):
@@ -216,8 +228,7 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, fmt, *args):
-        if '/api/' not in (args[0] if args else ''):
-            super().log_message(fmt, *args)
+        pass  # the browser polls every few seconds; request logs would flood server.log
 
     def do_GET(self):
         if self.path.split('?')[0] == '/api/sync':
@@ -272,10 +283,16 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
 
-def run_server():
-    socketserver.ThreadingTCPServer.allow_reuse_address = True
+def create_server():
+    # On Windows SO_REUSEADDR would let a second copy bind the same port, so keep it off
+    socketserver.ThreadingTCPServer.allow_reuse_address = (os.name != 'nt')
     socketserver.ThreadingTCPServer.daemon_threads = True
-    with socketserver.ThreadingTCPServer(("", PORT), CustomHandler) as httpd:
+    return socketserver.ThreadingTCPServer(("", PORT), CustomHandler)
+
+
+def run_server(httpd=None):
+    httpd = httpd or create_server()
+    with httpd:
         print(f"[OK] Local server running on http://localhost:{PORT}")
         httpd.serve_forever()
 
@@ -295,14 +312,16 @@ def run_tunnel():
         text=True,
         bufsize=1,
         encoding='utf-8',
-        errors='replace'
+        errors='replace',
+        creationflags=NO_WINDOW
     )
 
     tunnel_url = None
     url_pattern = re.compile(r'https://[a-zA-Z0-9-]+\.trycloudflare\.com')
 
+    # Keep draining cloudflared's output after the URL is found, otherwise its pipe fills up and it stalls
     for line in process.stderr:
-        match = url_pattern.search(line)
+        match = url_pattern.search(line) if not tunnel_url else None
         if match:
             tunnel_url = match.group(0)
             print("\n" + "="*60)
@@ -320,14 +339,23 @@ def run_tunnel():
                     f.write("AURA CRM Public Link (Cloudflare Tunnel):\n" + tunnel_url + "\n")
             except:
                 pass
-            break
 
     process.wait()
 
 if __name__ == '__main__':
-    t = threading.Thread(target=run_server, daemon=True)
-    t.start()
+    try:
+        httpd = create_server()
+    except OSError:
+        print(f"[i] AURA CRM server is already running on http://localhost:{PORT}")
+        sys.exit(0)
+    threading.Thread(target=run_server, args=(httpd,), daemon=True).start()
     threading.Thread(target=run_git_sync_loop, daemon=True).start()
     push_event.set()  # sync once right after start
     time.sleep(1)
-    run_tunnel()
+    # The CRM keeps running even if the tunnel is missing or drops; restart the tunnel after a pause
+    while True:
+        try:
+            run_tunnel()
+        except Exception as e:
+            print("[!] Tunnel error:", e)
+        time.sleep(60)
