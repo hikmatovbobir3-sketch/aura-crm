@@ -165,15 +165,15 @@ window.AURA_INITIAL_STATE = {
     "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": true,
     "s_extra_3": true,
     "s_extra_4": true,
-    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": false,
-    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": false,
+    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": true,
+    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": true,
     "custom_bexruzsharopovv_1791803367579_uei5t": true,
     "custom_d1yora_di_1791806312100_nu4hh": true,
     "s_extra_1": true,
     "q1": false,
     "custom_nozima1_live_1791952034037_f8fnd": true,
     "custom_nozima1_live_1791952350737_2qwxy": true,
-    "b6": false,
+    "b6": true,
     "custom_guzalinakamilova_1792044270739_mnvdd": true
   },
   "links": {
