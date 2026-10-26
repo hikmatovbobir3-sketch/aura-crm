@@ -458,14 +458,13 @@ window.AURA_INITIAL_STATE = {
     },
     {
       "id": "custom_doston_xudoyberdiyev_1793005593401_23z44",
-      "handle": "@doston.media.official",
+      "handle": "@doston_xudoyberdiyev",
       "city": "qarshi",
       "cityName": "Карши",
       "tg": "doston_xudoyberdiyev",
       "phone": null,
       "followers": null,
-      "note": null,
-      "phone2": null
+      "note": null
     }
   ],
   "viewsRev": 1791961128793
