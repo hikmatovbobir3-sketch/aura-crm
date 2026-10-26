@@ -352,6 +352,16 @@ window.AURA_INITIAL_STATE = {
       "phone2": null,
       "followers": null,
       "note": null
+    },
+    "custom_doston_xudoyberdiyev_1793005593401_23z44": {
+      "handle": "@doston.media.official",
+      "city": "qarshi",
+      "cityName": "Карши",
+      "tg": "doston_xudoyberdiyev",
+      "phone": null,
+      "phone2": null,
+      "followers": null,
+      "note": null
     }
   },
   "custom": [
@@ -443,13 +453,14 @@ window.AURA_INITIAL_STATE = {
     },
     {
       "id": "custom_doston_xudoyberdiyev_1793005593401_23z44",
-      "handle": "@doston_xudoyberdiyev",
+      "handle": "@doston.media.official",
       "city": "qarshi",
       "cityName": "Карши",
       "tg": "doston_xudoyberdiyev",
       "phone": null,
       "followers": null,
-      "note": null
+      "note": null,
+      "phone2": null
     }
   ],
   "viewsRev": 1791961128793
