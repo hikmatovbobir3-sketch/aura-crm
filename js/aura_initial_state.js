@@ -149,7 +149,8 @@ window.AURA_INITIAL_STATE = {
     "q16": true,
     "custom_nozima1_live_1791952034037_f8fnd": true,
     "custom_guzalinakamilova_1792044270739_mnvdd": true,
-    "custom_doston_xudoyberdiyev_1793005593401_23z44": true
+    "custom_doston_xudoyberdiyev_1793005593401_23z44": true,
+    "b42": true
   },
   "videos": {
     "q2": false,
@@ -177,7 +178,8 @@ window.AURA_INITIAL_STATE = {
     "custom_nozima1_live_1791952350737_2qwxy": true,
     "b6": true,
     "custom_guzalinakamilova_1792044270739_mnvdd": true,
-    "custom_doston_xudoyberdiyev_1793005593401_23z44": true
+    "custom_doston_xudoyberdiyev_1793005593401_23z44": true,
+    "b42": true
   },
   "links": {
     "s_extra_2": "https://www.instagram.com/p/Dd-qZAeNqOn/",
@@ -201,7 +203,8 @@ window.AURA_INITIAL_STATE = {
     "custom_nozima1_live_1791952350737_2qwxy": "https://www.instagram.com/reel/Debro7MtKCM/?exln=MWRnaDBuOWR3ODNveQ==",
     "custom_guzalinakamilova_1792044270739_mnvdd": "https://www.instagram.com/reel/DecOwyTu68v/?srtk=dWIyZnp6eXVuMjB6",
     "b6": "https://www.instagram.com/reel/Deed5X_t7FU/?utm_source=ig_web_copy_link&psln=MzRlODBiNWFlZA==&srtk=MzRlODBiNWFlZA==",
-    "custom_doston_xudoyberdiyev_1793005593401_23z44": "https://www.instagram.com/reel/Del3L3RoZV9/?rpxt=ZHB5ZXd3eHRuZm40"
+    "custom_doston_xudoyberdiyev_1793005593401_23z44": "https://www.instagram.com/reel/Del3L3RoZV9/?rpxt=ZHB5ZXd3eHRuZm40",
+    "b42": "https://www.instagram.com/reel/DehEaXoMaqL/?xtok=bW43Y3M0NjVvbm41"
   },
   "views": {
     "s_extra_2": "1 901",
