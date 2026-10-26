@@ -153,7 +153,7 @@ window.AURA_INITIAL_STATE = {
     "b42": true
   },
   "videos": {
-    "q2": false,
+    "q2": true,
     "custom_1791267810060": true,
     "b79": true,
     "s_extra_2": true,
@@ -204,7 +204,8 @@ window.AURA_INITIAL_STATE = {
     "custom_guzalinakamilova_1792044270739_mnvdd": "https://www.instagram.com/reel/DecOwyTu68v/?srtk=dWIyZnp6eXVuMjB6",
     "b6": "https://www.instagram.com/reel/Deed5X_t7FU/?utm_source=ig_web_copy_link&psln=MzRlODBiNWFlZA==&srtk=MzRlODBiNWFlZA==",
     "custom_doston_xudoyberdiyev_1793005593401_23z44": "https://www.instagram.com/reel/Del3L3RoZV9/?rpxt=ZHB5ZXd3eHRuZm40",
-    "b42": "https://www.instagram.com/reel/DehEaXoMaqL/?xtok=bW43Y3M0NjVvbm41"
+    "b42": "https://www.instagram.com/reel/DehEaXoMaqL/?xtok=bW43Y3M0NjVvbm41",
+    "q2": "https://www.instagram.com/reel/De7Hcgbo-w9/?dlrf=bGR0eXR4a25zaW0z"
   },
   "views": {
     "s_extra_2": "1 901",
