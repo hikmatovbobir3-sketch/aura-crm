@@ -120,7 +120,8 @@ window.AURA_INITIAL_STATE = {
     "qk16": true,
     "qk18": true,
     "custom_nozima1_live_1791952034037_f8fnd": true,
-    "custom_guzalinakamilova_1792044270739_mnvdd": true
+    "custom_guzalinakamilova_1792044270739_mnvdd": true,
+    "custom_doston_xudoyberdiyev_1793005593401_23z44": true
   },
   "vouchers": {
     "b1": false,
@@ -147,7 +148,8 @@ window.AURA_INITIAL_STATE = {
     "q1": false,
     "q16": true,
     "custom_nozima1_live_1791952034037_f8fnd": true,
-    "custom_guzalinakamilova_1792044270739_mnvdd": true
+    "custom_guzalinakamilova_1792044270739_mnvdd": true,
+    "custom_doston_xudoyberdiyev_1793005593401_23z44": true
   },
   "videos": {
     "q2": false,
