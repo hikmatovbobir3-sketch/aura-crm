@@ -306,7 +306,8 @@ window.AURA_INITIAL_STATE = {
     "qk90": true,
     "qk76": true,
     "qk57": true,
-    "qk7": true
+    "qk7": true,
+    "custom_doston_xudoyberdiyev_1793005593401_23z44": true
   },
   "edits": {
     "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": {
