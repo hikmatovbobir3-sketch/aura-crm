@@ -210,25 +210,30 @@ window.AURA_INITIAL_STATE = {
     "q16": "https://www.instagram.com/reel/Del3L3RoZV9/?rpxt=ZHB5ZXd3eHRuZm40"
   },
   "views": {
-    "s_extra_2": "1 901",
-    "b79": "103 613",
-    "custom_1791267810060": "1 664",
-    "s8": "7 601",
-    "s208": "7 601",
-    "b_zar_official_1": "1 664",
-    "custom_1791268034184": "4 947",
-    "b_normengliyevv_5": "4 947",
-    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": "9 660",
-    "s_extra_3": "4 429",
-    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "6 225",
-    "s_extra_4": "919",
-    "custom_bexruzsharopovv_1791803367579_uei5t": "18 528",
-    "custom_nozima1_live_1791952034037_f8fnd": "1 434",
-    "custom_nozima1_live_1791952350737_2qwxy": "1 434",
-    "s_extra_1": "2 874",
-    "custom_d1yora_di_1791806312100_nu4hh": "13 948",
-    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": "6 225",
-    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": "9 660"
+    "s_extra_2": "2 030",
+    "b79": "171 тыс.",
+    "custom_1791267810060": "1 841",
+    "s8": "7 834",
+    "s208": "7 834",
+    "b_zar_official_1": "1 841",
+    "custom_1791268034184": "5 443",
+    "b_normengliyevv_5": "5 443",
+    "custom_httpswwwinstagramcomnagicha__9595_1791356918338_nm3vl": "10 тыс.",
+    "s_extra_3": "4 898",
+    "custom_httpswwwinstagramcomruslaniraxmon_1791522883081_24xd1": "7 013",
+    "s_extra_4": "1 048",
+    "custom_bexruzsharopovv_1791803367579_uei5t": "21 тыс.",
+    "custom_nozima1_live_1791952034037_f8fnd": "2 686",
+    "custom_nozima1_live_1791952350737_2qwxy": "2 686",
+    "s_extra_1": "4 698",
+    "custom_d1yora_di_1791806312100_nu4hh": "15,4 тыс.",
+    "custom_httpswwwinstagramcomruslaniraxmon_1791461088553_k6s4w": "7 013",
+    "custom_httpswwwinstagramcomnagicha__9595_1791461272373_76bxf": "10 тыс.",
+    "custom_guzalinakamilova_1792044270739_mnvdd": "4 442",
+    "b6": "1 467",
+    "b42": "24,8 тыс.",
+    "q2": "10,9 тыс.",
+    "q16": "19,3 тыс."
   },
   "trash": {
     "q3": true,
@@ -469,5 +474,5 @@ window.AURA_INITIAL_STATE = {
       "note": null
     }
   ],
-  "viewsRev": 1791961128793
+  "viewsRev": 1793172869400
 };
