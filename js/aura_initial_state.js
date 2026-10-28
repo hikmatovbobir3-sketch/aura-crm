@@ -295,7 +295,6 @@ window.AURA_INITIAL_STATE = {
     "q28": true,
     "q26": true,
     "q25": true,
-    "q16": true,
     "q27": true,
     "qk8": true,
     "qk26": true,
